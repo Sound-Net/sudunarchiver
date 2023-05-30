@@ -1,0 +1,154 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.soundnet</groupId>
+    <artifactId>sudunarchiver</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+    <dependencies>
+		
+         <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>18</version>
+        </dependency>
+        
+		<!-- https://mvnrepository.com/artifact/org.jfxtras/jmetro -->
+		<dependency>
+			<groupId>org.jfxtras</groupId>
+			<artifactId>jmetro</artifactId>
+    		<version>11.6.16</version>
+    	</dependency>
+    	
+    	<!--Icons for GUI -->
+		 <dependency>
+		    <groupId>org.kordamp.ikonli</groupId>
+		    <artifactId>ikonli-javafx</artifactId>
+		    <version>12.3.1</version>
+		</dependency>
+		
+		
+    	<!--Fluent design for GUI -->
+		<dependency>
+		    <groupId>org.kordamp.ikonli</groupId>
+		    <artifactId>ikonli-fluentui-pack</artifactId>
+		    <version>12.3.1</version>
+		</dependency>
+		
+		
+		<!-- Extra controls for JavaFX -->
+		<dependency>
+		    <groupId>org.controlsfx</groupId>
+		    <artifactId>controlsfx</artifactId>
+		    <version>11.1.2</version>
+		</dependency>
+		
+		<!-- X3 decompresison library -->
+		<dependency>
+		    <groupId>pamguard.org</groupId>
+		    <artifactId>x3</artifactId>
+		    <version>2.2.2</version>
+		</dependency>
+		
+		
+		<!-- Validator library -->
+		<dependency>
+		   <groupId>net.synedra</groupId>
+		   <artifactId>validatorfx</artifactId>
+		   <version>0.4.2</version>
+		</dependency>
+
+        
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <release>11</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <executions>
+                    <execution>
+                        <!-- Default configuration for running -->
+                        <!-- Usage: mvn clean javafx:run -->
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>org.soundnet.sudunarchiver.App</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            	<plugin>
+				<!-- Build an executable JAR -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>false</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>main.SensorMainLauncher</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<!-- <source>8</source> <detectJavaApiLink>false</detectJavaApiLink> -->
+					<failOnError>false</failOnError>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+        </plugins>
+    </build>
+</project>
