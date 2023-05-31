@@ -11,8 +11,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Stage;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.stage.FileChooser;
 import javafx.stage.DirectoryChooser;
 import javafx.collections.FXCollections;
@@ -25,8 +25,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.controlsfx.control.*;
+import org.soundnet.sudunarchiver.SudUnpackerControl.SudFileProcessTask;
 import org.soundnet.sudunarchiver.SudUnpackerParams;
 
+import net.synedra.validatorfx.Severity;
+import net.synedra.validatorfx.ValidationMessage;
+import net.synedra.validatorfx.ValidationResult;
 import net.synedra.validatorfx.Validator;
 
 /**
@@ -80,7 +84,7 @@ public class SudUnpackerPane extends BorderPane {
 	/**
 	 * Showsthe sud decompression. 
 	 */
-	private TaskProgressView<SudUnpackTask> progressView;
+	private TaskProgressView<SudFileProcessTask> progressView;
 
 	/**
 	 * Starts the sud decompression running
@@ -115,7 +119,7 @@ public class SudUnpackerPane extends BorderPane {
 	/**
 	 * The current list of sud files.
 	 */
-	SimpleListProperty<File> sudFiles = new SimpleListProperty<>(FXCollections.observableArrayList());
+	private SimpleListProperty<File> sudFiles = new SimpleListProperty<>(FXCollections.observableArrayList());
 
 
 	/**
@@ -126,10 +130,20 @@ public class SudUnpackerPane extends BorderPane {
 	/**
 	 * The save folder. 
 	 */
-	private File saveFolder; 
+	private File saveFolder;
+
+	/**
+	 * Reference to the view
+	 */
+	private SudUnpackerView sudUnpackerView;
+
+	private boolean isRunning = false; 
 
 
-	public SudUnpackerPane(Stage stage) {
+
+
+	public SudUnpackerPane(SudUnpackerView sudUnpackerView) {
+		this.sudUnpackerView=sudUnpackerView; 
 		this.setCenter(createSudPane());
 	}
 
@@ -175,7 +189,7 @@ public class SudUnpackerPane extends BorderPane {
 		fileChooser.getExtensionFilters().addAll(
 				new ExtensionFilter("Sud Files", "*.sud"));
 		filesButton.setOnAction((action)->{
-			List<File> sudFiles = fileChooser.showOpenMultipleDialog(Stage.getWindows().get(0));
+			List<File> sudFiles = fileChooser.showOpenMultipleDialog(sudUnpackerView.getStage());
 			if (sudFiles != null) {
 				setSudTextField(null, sudFiles);
 			}
@@ -186,13 +200,10 @@ public class SudUnpackerPane extends BorderPane {
 		folderButton.setGraphic(SudIkonDude.createPamIcon("fltral-folder-open-20", DEFAULT_IKON_SIZE));
 		folderButton.setOnAction((action)->{
 			folderChooser.setTitle("Open SUD Folder");
-			File sudFolder = folderChooser.showDialog(Stage.getWindows().get(0));
+			File sudFolder = folderChooser.showDialog(sudUnpackerView.getStage());
 			if (sudFolder != null) {
-
 				currentFolder=sudFolder; 
-
 				updateSudFolder(); 
-
 			}
 		});
 
@@ -228,7 +239,7 @@ public class SudUnpackerPane extends BorderPane {
 		folderSaveButton.setGraphic(SudIkonDude.createPamIcon("fltral-folder-open-20", DEFAULT_IKON_SIZE));
 		folderSaveButton.setOnAction((action)->{
 			folderSaveChooser.setTitle("Open SUD Folder");
-			saveFolder = folderSaveChooser.showDialog(Stage.getWindows().get(0));
+			saveFolder = folderSaveChooser.showDialog(sudUnpackerView.getStage());
 			updateSaveFolder(); 
 		
 
@@ -249,6 +260,7 @@ public class SudUnpackerPane extends BorderPane {
 		saveHBox.getChildren().addAll(saveTextFiles, folderSaveButton, blankSpace); 
 
 		/**************Decompress Section ***************/
+		
 		Label decompressLabel = new Label("Decompress"); 
 		setTitleLabel(decompressLabel);
 
@@ -283,6 +295,20 @@ public class SudUnpackerPane extends BorderPane {
 
 		runButton = new Button(); 
 		runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-play-20", DEFAULT_IKON_SIZE));
+		runButton.setOnAction((action)->{
+			if (!isRunning) {
+				if (!checkRunErrors()) {
+					runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-stop-20", DEFAULT_IKON_SIZE));
+					isRunning=true;
+					this.sudUnpackerView.run(); 
+				}
+			}
+			else {
+				runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-play-20", DEFAULT_IKON_SIZE));
+				isRunning=false;
+				this.sudUnpackerView.stop(); 
+			}
+		});
 
 		threadSpinner = new Spinner<Integer>(1, 8, 1, 1); 
 		threadSpinner.getStyleClass().add( Spinner.STYLE_CLASS_SPLIT_ARROWS_HORIZONTAL);
@@ -308,7 +334,8 @@ public class SudUnpackerPane extends BorderPane {
 		runBorderPane.setLeft(runButton);
 		runBorderPane.setRight(runHBox);
 
-		progressView = new TaskProgressView<SudUnpackTask>(); 
+		progressView = new TaskProgressView<SudFileProcessTask>(); 
+		progressView.setRetainTasks(true);
 
 		//enable the controls. 
 		enableControls();
@@ -359,7 +386,6 @@ public class SudUnpackerPane extends BorderPane {
 
 		this.filesTextFiles.setText(message);
 		filesTextFiles.setTooltip(new Tooltip(message));
-
 	}
 
 
@@ -559,6 +585,51 @@ public class SudUnpackerPane extends BorderPane {
 		
 		this.saveFolder =  params.saveFolder; 
 		this.updateSaveFolder(); 
+	}
+
+	/**
+	 * Get the validator. 
+	 * @return - the validator. 
+	 */
+	public Validator getValidator() {
+		return this.validator;
+	}
+	
+	/**
+	 * Check if there are run errors and show a dialog if so. 
+	 * @return true of there were errors, false if not. 
+	 */
+	private boolean checkRunErrors() {
+		ValidationResult result = getValidator().getValidationResult(); 
+
+		List<ValidationMessage> messages = result.getMessages(); 
+
+		int errcount = 0; 
+		String errorMessages = "";
+		for (int i=0; i<messages.size(); i++) {
+			if (messages.get(i).getSeverity().equals(Severity.ERROR)) {
+				errorMessages +=	messages.get(i).getText(); 
+				errcount++; 
+			}
+		}
+
+		if (errcount>0) {
+	        Alert a = new Alert(AlertType.ERROR);
+	        a.setHeaderText("Cannot decompress SUD");
+	        a.setContentText(errorMessages);
+	        a.show();
+	        return true;
+		}
+		
+		return false; 
+	}
+
+	/**
+	 * The task progress view. 
+	 * @return the task progress view. 
+	 */
+	public TaskProgressView<SudFileProcessTask> getTaskView() {
+		return this.progressView; 		
 	}
 
 

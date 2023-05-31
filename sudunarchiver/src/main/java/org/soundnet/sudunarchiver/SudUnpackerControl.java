@@ -19,9 +19,15 @@ import javafx.concurrent.Task;
  */
 public class SudUnpackerControl {
 
-	SudUnpackerParams sudExapnderParams = new SudUnpackerParams(); 
+	/**
+	 * The parameters for the sud expander. 
+	 */
+	private SudUnpackerParams sudExapnderParams = new SudUnpackerParams(); 
 
-	SudFileExpander fileExpander;
+	/**
+	 * The sud file expander. 
+	 */
+	private SudFileExpander fileExpander;
 
 	/**
 	 * The current file index. 
@@ -32,7 +38,6 @@ public class SudUnpackerControl {
 	 * Listeners for updates to SUD file processing. 
 	 */
 	public ArrayList<SudUnpackListener> listeners = new ArrayList<SudUnpackListener>(); 
-
 
 	/**
 	 * The currently running tasks. 
@@ -58,7 +63,14 @@ public class SudUnpackerControl {
 		SudParams sudParams = new SudParams(); 
 		sudParams.setFileSave(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV,  
 				sudExpanderParams.unPackXML, sudExpanderParams.unPackClicks);
-		sudParams.saveFolder = sudExpanderParams.saveFolder.getAbsolutePath(); 
+		sudParams.setSudFilePath(file.getAbsolutePath());
+		
+		if (sudParams.saveFolder!=null) {
+			sudParams.saveFolder = sudExpanderParams.saveFolder.getAbsolutePath(); 
+		}
+		else {
+			sudParams.saveFolder = null;
+		}
 
 		fileExpander.setSudParams(sudParams);
 
@@ -74,23 +86,30 @@ public class SudUnpackerControl {
 		for (int i=0; i<sudExapnderParams.nThreads; i++) {
 			startNextFileTask(null); 
 		}
-
 	}
 
 	/**
 	 * Start the next file task. 
 	 */
 	private synchronized void startNextFileTask(SudFileProcessTask oldTask) {
-
-		currentFileInd++; 
-
+	
+		if (sudExapnderParams.sudFiles == null ||   currentFileInd >= sudExapnderParams.sudFiles.size()) {
+			updateListeners(Sud_Message.UNPACK_FINISH, null);
+			return;
+		}
+		
 		if (oldTask!=null) {
 			this.currentTasks.remove(oldTask); 
 		}
 
-		SudFileProcessTask sudProcessTask = new SudFileProcessTask(sudExapnderParams.sudFiles.get(currentFileInd), sudExapnderParams); 
+		SudFileProcessTask sudProcessTask = new SudFileProcessTask(
+				sudExapnderParams.sudFiles.get(currentFileInd), sudExapnderParams); 
+		
+		updateListeners(Sud_Message.NEW_SUD_FILE, sudProcessTask);
 
 		currentTasks.add(sudProcessTask); 
+		
+		currentFileInd++; 
 
 		Thread th = new Thread(sudProcessTask);
 		th.setDaemon(true);
@@ -144,8 +163,7 @@ public class SudUnpackerControl {
 	}
 
 
-
-	class SudFileProcessTask extends Task<Integer>{
+	public class SudFileProcessTask extends Task<Integer>{
 
 		private SudFileExpander sudFileExpander;
 
@@ -163,8 +181,10 @@ public class SudUnpackerControl {
 			sudFileExpander.addSudFileListener(( chunkId,  sudChunk)->{
 				//update the progress...
 				chunkCount++; 
+				
+				//System.out.println("Update progress: " + chunkCount + "  " + nBlocks);
 				//update the progress of the task. 
-				updateProgress(nBlocks, chunkCount);
+				updateProgress(chunkCount, nBlocks);
 			});
 		}
 
@@ -172,14 +192,20 @@ public class SudUnpackerControl {
 		protected Integer call() throws Exception {
 
 			try {
+				
+				updateProgress(-1, chunkCount);
+//				System.out.println("SUD file start processing: " + file.getAbsolutePath());
+
 				//take a peek at the file to get the number of chunks
-				SudHeader header = sudFileExpander.openSudFile( sudFileExpander.getSudFile()); 
+				SudHeader header = sudFileExpander.openSudFile(file); 
 				sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
 
-				nBlocks = header.NoOfBlocks; 
+				nBlocks = 10000; // header.NoOfBlocks; 
 
+//				System.out.println("SUD No. Blocks: " +  header.EndBlock);
 				sudFileExpander.processFile();
-
+				
+//				System.out.println("SUD file finished processing");
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -209,9 +235,6 @@ public class SudUnpackerControl {
 			updateMessage("Failed!");
 			processNextFile();
 		}
-
-
-
 	}
 
 
