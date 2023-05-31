@@ -1,7 +1,7 @@
 package org.soundnet.sudunarchiver;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The parameters for the sud unpacker. 
@@ -13,37 +13,43 @@ public class SudUnpackerParams {
 	/**
 	 * List of folders or files to unpack. 
 	 */
-	ArrayList<File> unpackFiles = null;
+	public List<File> sudFiles = null;
 	
 	/**
 	 * List of folders or files to unpack. 
 	 */
-	File saveFolder = null;
+	public File saveFolder = null;
 	
 	/**
 	 * True for sub folders to be used. 
 	 */
-	boolean subFolder = true; 
+	public boolean subFolder = true; 
 	
 	/**
 	 * True to unpack raw wav files
 	 */
-	boolean unPackWav = true; 
+	public boolean unPackWav = true; 
 	
 	/**
 	 * True to unpack the xml files 
 	 */
-	boolean unPackXML = true; 
+	public boolean unPackXML = true; 
 
 	/**
 	 * True to unpack CSV files
 	 */
-	boolean unPackCSV = true; 
+	public boolean unPackCSV = true; 
 
 	/**
 	 * True to unpack clicks. 
 	 */
-	boolean unPackClicks = true; 
+	public boolean unPackClicks = true; 
+	
+	/**
+	 * The number of threads to process on....be careful not to mely your computer with 
+	 * this one. 
+	 */
+	public int nThreads = 1; 
 
 
 }

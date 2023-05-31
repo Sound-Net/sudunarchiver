@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.controlsfx.control.*;
+import org.soundnet.sudunarchiver.SudUnpackerParams;
+
 import net.synedra.validatorfx.Validator;
 
 /**
@@ -85,6 +87,9 @@ public class SudUnpackerPane extends BorderPane {
 	 */
 	private Button runButton;
 
+	/**
+	 * The spinner for setting how many threads to use. 
+	 */
 	private Spinner<Integer> threadSpinner;
 
 	/**
@@ -116,14 +121,19 @@ public class SudUnpackerPane extends BorderPane {
 	/**
 	 * The current folder of sud files. Can be null.
 	 */
-	private File currentFolder = null; 
+	private File currentFolder = null;
+
+	/**
+	 * The save folder. 
+	 */
+	private File saveFolder; 
 
 
 	public SudUnpackerPane(Stage stage) {
-		this.setCenter(createSudView());
+		this.setCenter(createSudPane());
 	}
 
-	public Pane createSudView() {
+	public Pane createSudPane() {
 
 		/**************Import Files Section ***************/
 
@@ -181,11 +191,7 @@ public class SudUnpackerPane extends BorderPane {
 
 				currentFolder=sudFolder; 
 
-				showProgressIndicator(true);
-
-				Thread th = new Thread(new SudFolderTasK(sudFolder, subFolderToggle.isSelected()));
-				th.setDaemon(true);
-				th.start();
+				updateSudFolder(); 
 
 			}
 		});
@@ -204,15 +210,8 @@ public class SudUnpackerPane extends BorderPane {
 		subFolderHBox.setAlignment(Pos.CENTER_LEFT);
 		subFolderToggle = new ToggleSwitch();
 		subFolderToggle.selectedProperty().addListener((obsVal, oldval, newVal)->{
-			if (currentFolder != null) {
-
-				showProgressIndicator(true);
-
-				Thread th = new Thread(new SudFolderTasK(currentFolder, subFolderToggle.isSelected()));
-				th.setDaemon(true);
-				th.start();
-
-			}});
+			updateSudFolder(); 
+		});
 
 		subFolderHBox.getChildren().addAll(subFolderToggle, new Label("Sub folders")); 
 
@@ -229,10 +228,10 @@ public class SudUnpackerPane extends BorderPane {
 		folderSaveButton.setGraphic(SudIkonDude.createPamIcon("fltral-folder-open-20", DEFAULT_IKON_SIZE));
 		folderSaveButton.setOnAction((action)->{
 			folderSaveChooser.setTitle("Open SUD Folder");
-			File saveFolder = folderSaveChooser.showDialog(Stage.getWindows().get(0));
-			if (saveFolder != null) {
-				saveTextFiles.setText(saveFolder.getAbsolutePath());
-			}
+			saveFolder = folderSaveChooser.showDialog(Stage.getWindows().get(0));
+			updateSaveFolder(); 
+		
+
 		});
 
 		HBox saveHBox = new HBox(); 
@@ -321,11 +320,23 @@ public class SudUnpackerPane extends BorderPane {
 		vBox.setPadding(new Insets(DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING));
 		vBox.getChildren().addAll(fileLabelBox, filesHBox, subFolderHBox, decompressLabel, wavSaveToggle, clkSaveToggle,
 				csvSaveToggle, xmlSaveToggle, saveLabel, saveHBox, runLabel, runBorderPane, progressView); 
-	
+
 
 		return vBox;
 	}
 
+
+	/**
+	 * Called whenever the save folder is upodated. 
+	 */
+	private void updateSaveFolder() {
+		if (saveFolder != null) {
+			saveTextFiles.setText(saveFolder.getAbsolutePath());
+		}
+		else {
+			saveTextFiles.setText("Files will be saved to same location");
+		}	
+	}
 
 	/**
 	 * Set the text field so it shows the number of files. 
@@ -334,10 +345,10 @@ public class SudUnpackerPane extends BorderPane {
 	 */
 	private void setSudTextField(File sudFolder, List<File> sudFiles) {
 		String message; 
-		
+
 		if (sudFolder!=null) {
 			message = sudFiles.size() + " sud files  -  " + sudFolder; 
-			
+
 		}
 		else {
 			message = sudFiles.size() + " sud files \n";
@@ -345,7 +356,7 @@ public class SudUnpackerPane extends BorderPane {
 				message+= sudFiles.get(i).getName() + "\n"; 
 			}
 		}
-		
+
 		this.filesTextFiles.setText(message);
 		filesTextFiles.setTooltip(new Tooltip(message));
 
@@ -404,7 +415,7 @@ public class SudUnpackerPane extends BorderPane {
 
 			try {
 				List<File> folderSudFiles = getSudFileList(subFolderToggle.isSelected());
-				
+
 				if (folderSudFiles!=null) {
 					Platform.runLater(()->{
 						sudFiles.clear();
@@ -456,7 +467,7 @@ public class SudUnpackerPane extends BorderPane {
 		progressIndicator.setProgress(-1);
 		progressIndicator.setVisible(show);
 	}
-	
+
 	/**
 	 * List all sud files in a folder. 
 	 * @param directoryName - the name of the folder. 
@@ -464,20 +475,20 @@ public class SudUnpackerPane extends BorderPane {
 	 * @return a list of all sud files. 
 	 */
 	public List<File> listSud(File directory, boolean subFolder) {
-		
+
 		List<File> sudFiles = new ArrayList<File>(); 
-		
-	    // Get all files from a directory.
-	    File[] fList = directory.listFiles();
-	    if(fList != null)
-	        for (File file : fList) {      
-	            if (file.isFile() && isSudFile(file)) {
-	            	sudFiles.add(file);
-	            } else if (file.isDirectory() && subFolder) {
-	            	sudFiles.addAll(listSud(file, subFolder));
-	            }
-	        }
-	    
+
+		// Get all files from a directory.
+		File[] fList = directory.listFiles();
+		if(fList != null)
+			for (File file : fList) {      
+				if (file.isFile() && isSudFile(file)) {
+					sudFiles.add(file);
+				} else if (file.isDirectory() && subFolder) {
+					sudFiles.addAll(listSud(file, subFolder));
+				}
+			}
+
 		return sudFiles;
 	}
 
@@ -488,6 +499,66 @@ public class SudUnpackerPane extends BorderPane {
 	 */
 	private boolean isSudFile(File file) {
 		return file.getName().endsWith(".sud"); 
+	}
+	
+	private void updateSudFolder() {
+		if (currentFolder != null) {
+
+			showProgressIndicator(true);
+
+			Thread th = new Thread(new SudFolderTasK(currentFolder, subFolderToggle.isSelected()));
+			th.setDaemon(true);
+			th.start();
+
+		};
+	}
+
+	/**
+	 * Update the parameters from the set user controls. 
+	 * @param params - the parameters to update. Note this is not cloned within the function. 
+	 * @return the updated parameters. 
+	 */
+	public SudUnpackerParams getParams(SudUnpackerParams params) {
+
+		params.saveFolder = this.saveFolder; 
+		
+		params.nThreads = this.threadSpinner.getValue(); 
+		
+		params.subFolder = this.subFolderToggle.isSelected();
+		
+		params.unPackWav = this.wavSaveToggle.isSelected();
+		params.unPackCSV = this.csvSaveToggle.isSelected();
+		params.unPackXML = this.xmlSaveToggle.isSelected();
+		params.unPackClicks = this.clkSaveToggle.isSelected();
+		
+		params.sudFiles = this.sudFiles.get(); 
+
+		return params;
+	}
+
+	/**
+	 * Update the controls to reflect the current paramters. 
+	 * @param params - the params to set
+	 */
+	public void setParams(SudUnpackerParams params) {
+		
+		this.wavSaveToggle.setSelected(	params.unPackWav);
+		this.csvSaveToggle.setSelected(	params.unPackCSV);
+		this.xmlSaveToggle.setSelected(	params.unPackXML);
+		this.clkSaveToggle.setSelected(	params.unPackClicks);
+		
+		this.threadSpinner.getValueFactory().setValue(	params.nThreads);; 
+
+		this.subFolderToggle.setSelected(params.subFolder);
+		
+		this.sudFiles.set(FXCollections.observableList(params.sudFiles));
+		
+		//if the folder is null will do nothing. Note this will override file list if it has already been set. 
+		this.currentFolder =  params.saveFolder; 
+		updateSudFolder();
+		
+		this.saveFolder =  params.saveFolder; 
+		this.updateSaveFolder(); 
 	}
 
 
