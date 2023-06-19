@@ -1,6 +1,7 @@
 package org.soundnet.sudunarchiver.layout;
 
 import org.soundnet.sudunarchiver.SudUnpackListener.Sud_Message;
+
 import org.soundnet.sudunarchiver.SudUnpackerControl;
 import org.soundnet.sudunarchiver.SudUnpackerControl.SudFileProcessTask;
 
@@ -12,6 +13,7 @@ import javafx.stage.Window;
 import jfxtras.styles.jmetro.JMetroStyleClass;
 import jfxtras.styles.jmetro.Style;
 import jfxtras.styles.jmetro.JMetro;
+
 /**
  * The layout and controls for SUD unpacking 
  * @author Jamie Macaulay
@@ -77,7 +79,7 @@ public class SudUnpackerView extends BorderPane {
 	public void notifyUpdate(Sud_Message message, Object data) {
 		switch (message) {
 		case NEW_SUD_FILE:
-			sudUnpackerPane.getTaskView().getTasks().add( (SudFileProcessTask) data); 
+			sudUnpackerPane.getTaskView().getTasks().add(0, (SudFileProcessTask) data); 
 			break;
 		case END_SUD_FILE:
 			//just incase. 
@@ -86,6 +88,7 @@ public class SudUnpackerView extends BorderPane {
 		case UNPACK_FINISH:
 			break;
 		case UNPACK_START:
+			sudUnpackerPane.getTaskView().getTasks().clear();
 			break;
 		default:
 			break;

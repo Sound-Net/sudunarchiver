@@ -2,7 +2,9 @@ package org.soundnet.sudunarchiver;
 
 import java.io.File;
 
+import org.pamguard.x3.sud.SudAudioInputStream;
 import org.pamguard.x3.sud.SudFileExpander;
+import org.pamguard.x3.sud.SudFileMap;
 import org.pamguard.x3.sud.SudHeader;
 import org.pamguard.x3.sud.SudParams;
 import org.soundnet.sudunarchiver.SudUnpackListener.Sud_Message;
@@ -61,8 +63,12 @@ public class SudUnpackerControl {
 		SudFileExpander fileExpander = new SudFileExpander(file); 
 
 		SudParams sudParams = new SudParams(); 
+												
+		sudParams.setSudEnable(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV, sudExpanderParams.unPackClicks);
+		
 		sudParams.setFileSave(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV,  
 				sudExpanderParams.unPackXML, sudExpanderParams.unPackClicks);
+						
 		sudParams.setSudFilePath(file.getAbsolutePath());
 		
 		if (sudParams.saveFolder!=null) {
@@ -92,6 +98,9 @@ public class SudUnpackerControl {
 	 * Start the next file task. 
 	 */
 	private synchronized void startNextFileTask(SudFileProcessTask oldTask) {
+		
+		System.out.println("startNextFileTask: " + currentFileInd);
+
 	
 		if (sudExapnderParams.sudFiles == null ||   currentFileInd >= sudExapnderParams.sudFiles.size()) {
 			updateListeners(Sud_Message.UNPACK_FINISH, null);
@@ -193,19 +202,23 @@ public class SudUnpackerControl {
 
 			try {
 				
-				updateProgress(-1, chunkCount);
-//				System.out.println("SUD file start processing: " + file.getAbsolutePath());
+				System.out.println("Creating map: " + file.getAbsolutePath());
 
-				//take a peek at the file to get the number of chunks
-				SudHeader header = sudFileExpander.openSudFile(file); 
+				//mape the file
+				updateMessage("Mapping SUD file " + file.getName());
+				SudFileMap fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, false);
 				sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
+				nBlocks = fileMap.chunkHeaderMap.size(); 
+							
+				updateProgress(-1, chunkCount);
+				System.out.println("SUD file start processing: " + file.getAbsolutePath());
 
-				nBlocks = 10000; // header.NoOfBlocks; 
-
-//				System.out.println("SUD No. Blocks: " +  header.EndBlock);
+				System.out.println("SUD No. Blocks: " +  nBlocks);
+				updateMessage("Processing SUD file" + file.getName());
 				sudFileExpander.processFile();
+			
 				
-//				System.out.println("SUD file finished processing");
+				System.out.println("SUD file finished processing");
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -220,14 +233,14 @@ public class SudUnpackerControl {
 
 		@Override protected void succeeded() {
 			super.succeeded();
-			updateMessage("Done!");
+			updateMessage("Done!" + file.getName());
 			processNextFile();
 		}
 
 		@Override protected void cancelled() {
 			super.cancelled();
 			updateMessage("Cancelled!");
-			processNextFile();
+			//processNextFile();
 		}
 
 		@Override protected void failed() {
