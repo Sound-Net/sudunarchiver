@@ -8,7 +8,7 @@ package org.soundnet.sudunarchiver;
 public interface SudUnpackListener {
 	
 	public enum Sud_Message {
-		UNPACK_START, UNPACK_FINISH, NEW_SUD_FILE, END_SUD_FILE
+		UNPACK_START, UNPACK_FINISH, NEW_SUD_FILE, END_SUD_FILE, PROGRESS_UPDATE
 	}
 	
 	/**

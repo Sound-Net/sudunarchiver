@@ -137,7 +137,16 @@ public class SudUnpackerPane extends BorderPane {
 	 */
 	private SudUnpackerView sudUnpackerView;
 
-	private boolean isRunning = false; 
+	private boolean isRunning = false;
+
+	private ProgressBar progressBar;
+
+	private Label progressLabel;
+
+	/**
+	 * wav zero pad check box. 
+	 */
+	private CheckBox wavZeroPad; 
 
 
 
@@ -268,6 +277,12 @@ public class SudUnpackerPane extends BorderPane {
 		wavSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
+		
+		wavZeroPad = new CheckBox("Zero Pad"); 
+		BorderPane wavSaveTogglePane = new BorderPane(); 
+		wavSaveTogglePane.setLeft(wavSaveToggle);
+		wavSaveTogglePane.setRight(wavZeroPad);
+
 
 		clkSaveToggle = new ToggleSwitch("Click files"); 
 		clkSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
@@ -333,6 +348,12 @@ public class SudUnpackerPane extends BorderPane {
 		BorderPane runBorderPane = new BorderPane();
 		runBorderPane.setLeft(runButton);
 		runBorderPane.setRight(runHBox);
+		runBorderPane.setCenter(progressBar = new ProgressBar());
+		BorderPane.setAlignment(progressBar, Pos.CENTER);
+		progressBar.setProgress(0);
+		progressBar.setPadding(new Insets(5,5,5,5));
+		runBorderPane.setBottom(progressLabel = new Label());
+
 
 		progressView = new TaskProgressView<SudFileProcessTask>(); 
 		progressView.setRetainTasks(true);
@@ -345,13 +366,20 @@ public class SudUnpackerPane extends BorderPane {
 		VBox vBox = new VBox(); 
 		vBox.setSpacing(5);
 		vBox.setPadding(new Insets(DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING));
-		vBox.getChildren().addAll(fileLabelBox, filesHBox, subFolderHBox, decompressLabel, wavSaveToggle, clkSaveToggle,
+		vBox.getChildren().addAll(fileLabelBox, filesHBox, subFolderHBox, decompressLabel, wavSaveTogglePane, clkSaveToggle,
 				csvSaveToggle, xmlSaveToggle, saveLabel, saveHBox, runLabel, runBorderPane, progressView); 
 
 
 		return vBox;
 	}
 
+	/**
+	 * Get the primary progress bar that shows overall progress.
+	 * @return the primary progress bar. 
+	 */
+	public ProgressBar getProgressBar() {
+		return progressBar;
+	}
 
 	/**
 	 * Called whenever the save folder is upodated. 
@@ -402,6 +430,8 @@ public class SudUnpackerPane extends BorderPane {
 				csvSaveToggle.isSelected() || xmlSaveToggle.isSelected()) {
 			runButton.setDisable(false);
 		}
+		wavZeroPad.setDisable(true);
+		if (wavSaveToggle.isSelected()) wavZeroPad.setDisable(false);
 	}
 
 	/**
@@ -558,6 +588,8 @@ public class SudUnpackerPane extends BorderPane {
 		params.unPackClicks = this.clkSaveToggle.isSelected();
 		
 		params.sudFiles = this.sudFiles.get(); 
+		
+		params.zeroPad = this.wavZeroPad.isSelected(); 
 
 		return params;
 	}
@@ -578,6 +610,8 @@ public class SudUnpackerPane extends BorderPane {
 		this.subFolderToggle.setSelected(params.subFolder);
 		
 		this.sudFiles.set(FXCollections.observableList(params.sudFiles));
+		
+		this.wavSaveToggle.setSelected(params.zeroPad);
 		
 		//if the folder is null will do nothing. Note this will override file list if it has already been set. 
 		this.currentFolder =  params.saveFolder; 

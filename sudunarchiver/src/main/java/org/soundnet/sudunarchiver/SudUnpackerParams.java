@@ -49,7 +49,12 @@ public class SudUnpackerParams {
 	 * The number of threads to process on....be careful not to mely your computer with 
 	 * this one. 
 	 */
-	public int nThreads = 1; 
+	public int nThreads = 1;
+
+	/**
+	 * True to zero pad the wav files
+	 */
+	public boolean zeroPad; 
 
 
 }

@@ -5,12 +5,12 @@ import java.io.File;
 import org.pamguard.x3.sud.SudAudioInputStream;
 import org.pamguard.x3.sud.SudFileExpander;
 import org.pamguard.x3.sud.SudFileMap;
-import org.pamguard.x3.sud.SudHeader;
 import org.pamguard.x3.sud.SudParams;
 import org.soundnet.sudunarchiver.SudUnpackListener.Sud_Message;
 
 import java.util.ArrayList;
 
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 
 
@@ -77,6 +77,8 @@ public class SudUnpackerControl {
 		else {
 			sudParams.saveFolder = null;
 		}
+		
+		sudParams.zeroPad = sudExpanderParams.zeroPad;
 
 		fileExpander.setSudParams(sudParams);
 
@@ -182,9 +184,12 @@ public class SudUnpackerControl {
 
 		private int chunkCount;
 
+		private SudUnpackerParams sudExapnderParams;
+
 		public SudFileProcessTask(File file, SudUnpackerParams sudExapnderParams) {
 
 			this.file = file; 
+			this.sudExapnderParams=sudExapnderParams; 
 			sudFileExpander = createSudFileExpander( file,  sudExapnderParams);
 
 			sudFileExpander.addSudFileListener(( chunkId,  sudChunk)->{
@@ -193,8 +198,18 @@ public class SudUnpackerControl {
 				
 				//System.out.println("Update progress: " + chunkCount + "  " + nBlocks);
 				//update the progress of the task. 
-				updateProgress(chunkCount, nBlocks);
+				updateProgress(chunkCount, 2*nBlocks);
+				
+				if (chunkCount%100==0) {
+					Platform.runLater(()->{
+						updateListeners(Sud_Message.PROGRESS_UPDATE, this); 
+					});
+				}
 			});
+		}
+
+		public File getFile() {
+			return file;
 		}
 
 		@Override
@@ -248,6 +263,19 @@ public class SudUnpackerControl {
 			updateMessage("Failed!");
 			processNextFile();
 		}
+
+		public int getFileindex() {
+			// TODO a bit dodgy...
+			return sudExapnderParams.sudFiles.indexOf(file);
+		}
+	}
+
+	/**
+	 * The current index of the files being processed. 
+	 * @return - the current file index. 
+	 */
+	public int getCurretnFileindex() {
+		return currentFileInd;
 	}
 
 
