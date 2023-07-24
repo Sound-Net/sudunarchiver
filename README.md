@@ -1,4 +1,4 @@
-# SUDUnarchiver (Still in active devleopment - do not use)
+# SUDUnarchiver
 
 ## Introduction
 
@@ -7,14 +7,24 @@ SUDUnarchiver is the sud file decompressiong program you always wished you had f
 - Decompress all sud files within a folders or subfolders. 
 - Select which data within sud filesto decompress. 
 - Multi-threading so powerful processors can decompress data faster.
-
+- Cross platform (Windows, Linux and Mac). 
 
 ## Installation 
 
-SUDUnarchiver is available as an .exe file to be used in Windows or a jar file in other platforms. 
-
+SUDUnarchiver is available as an .exe file to be used in Windows in the releases/windows folder (Mac OS suppport soon). 
 
 ## Use
 
-Select a folder or multiple files. Select which data you would like to decompress. Optionally select a location to save files to. Select mult threading if your computer is up to it and press the run button. 
+SUDUnarchiver is straightforward to use. 
+
+- 1 -> Select a folder or multiple files.
+- 2 -> Select which data you would like to decompress.
+- 3 -> Optionally select a location to save files to. 
+- 4 -> Select mult threading if your computer is up to it and press the run button. 
+
+<center><img src="resources/sudunarchover_screenshot_1.png" width="512"></center>
+An example of SUDUnarchiver decompressing a folder of files.
+
+
+
 
