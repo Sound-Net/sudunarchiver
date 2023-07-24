@@ -357,18 +357,19 @@ public class SudUnpackerPane extends BorderPane {
 		runButton.setTooltip(new Tooltip("Start or stop the decompression process")); 
 		runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-play-20", DEFAULT_IKON_SIZE));
 		runButton.setOnAction((action)->{
+			
 			if (!isRunning) {
 				if (!checkRunErrors()) {
-					runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-stop-20", DEFAULT_IKON_SIZE));
 					isRunning=true;
 					this.sudUnpackerView.run(); 
 				}
 			}
 			else {
-				runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-play-20", DEFAULT_IKON_SIZE));
 				isRunning=false;
 				this.sudUnpackerView.stop(); 
 			}
+			
+			 setRunButtonIcon();
 		});
 
 		threadSpinner = new Spinner<Integer>(1, 8, 1, 1); 
@@ -420,6 +421,27 @@ public class SudUnpackerPane extends BorderPane {
 
 
 		return vBox;
+	}
+	
+	/**
+	 * Set whether the icon is a play or stop sign on the run button. Depends on how isRunning is set. 
+	 */
+	protected void setRunButtonIcon() {
+		if (isRunning) {
+			runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-stop-20", DEFAULT_IKON_SIZE));
+
+		}
+		else {
+			runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-play-20", DEFAULT_IKON_SIZE));
+		}
+	}
+
+	public boolean isRunning() {
+		return isRunning;
+	}
+
+	public void setRunning(boolean isRunning) {
+		this.isRunning = isRunning;
 	}
 
 	/**

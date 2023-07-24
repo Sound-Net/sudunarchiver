@@ -92,22 +92,22 @@ public class SudUnpackerView extends BorderPane {
 			break;
 		case END_SUD_FILE:
 			//just incase. 
-			sudUnpackerPane.getTaskView().getTasks().remove((SudFileProcessTask) data); 
-			
+			//sudUnpackerPane.getTaskView().getTasks().remove((SudFileProcessTask) data); 
 			this.progress[((SudFileProcessTask) data).getFileindex()]=1.; 
 
 			break;
 		case UNPACK_FINISH:
+			sudUnpackerPane.setRunning(false); 
+			sudUnpackerPane.setRunButtonIcon(); 
 			break;
 		case UNPACK_START:
 			sudUnpackerPane.getTaskView().getTasks().clear();
 			sudUnpackerPane.getProgressBar().setProgress(0);
+			break;
 		case PROGRESS_UPDATE:
 			this.progress[((SudFileProcessTask) data).getFileindex()]=((SudFileProcessTask) data).getProgress(); 
 			
-			
 			sudUnpackerPane.getProgressBar().setProgress(getOverallProgress());
-			
 
 			break;
 		default:

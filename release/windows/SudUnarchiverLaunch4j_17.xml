@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>C:\Users\Jamie Macaulay\git\sudunarchiver\sudunarchiver\target\sudunarchiver-0.0.1-SNAPSHOT.jar</jar>
+  <outfile>C:\Users\Jamie Macaulay\Desktop\sudunarchiver_0-91.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir></chdir>
+  <priority>normal</priority>
+  <downloadUrl>https://corretto.aws/downloads/latest/amazon-corretto-17-x64-macos-jdk.pkg</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>true</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon>C:\Users\Jamie Macaulay\git\sudunarchiver\resources\decompressing_whales_icon.ico</icon>
+  <jre>
+    <path>C:\Program Files\Amazon Corretto\jdk17.0.6_10</path>
+    <requiresJdk>false</requiresJdk>
+    <requires64Bit>true</requires64Bit>
+    <minVersion>11</minVersion>
+    <maxVersion>20</maxVersion>
+    <opt>-mx4098m</opt>
+    <opt>-Djava.library.path=&quot;%EXEDIR%\\lib&quot;</opt>
+  </jre>
+</launch4jConfig>

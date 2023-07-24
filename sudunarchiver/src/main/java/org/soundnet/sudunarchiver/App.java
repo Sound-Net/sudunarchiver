@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -36,6 +37,11 @@ public class App extends Application {
                 System.exit(0);
             }
         });
+        
+        stage.getIcons().add( new Image(App.class.getResourceAsStream("decompressing_whales_icon.png"))); 
+
+        
+//        stage.getIcons().add(new Image(<yourclassname>.class.getResourceAsStream("icon.png")));
         
         var scene = new Scene(new StackPane(view.getMainPane()), 500, 500);
         

@@ -7,17 +7,30 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
 	<dependencies>
+	
+			<!--Icons for GUI -->
+		<dependency>
+			<groupId>org.kordamp.ikonli</groupId>
+			<artifactId>ikonli-javafx</artifactId>
+			<version>12.3.1</version>
+		</dependency>
 
+		<!--Fluent design for GUI -->
+		<dependency>
+			<groupId>org.kordamp.ikonli</groupId>
+			<artifactId>ikonli-fluentui-pack</artifactId>
+			<version>12.3.1</version>
+		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
-			<version>20.0.1</version>
+			<version>11</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.jfxtras/jmetro -->
@@ -43,22 +56,6 @@
 			<artifactId>controlsfx</artifactId>
 			<version>11.1.2</version>
 		</dependency>
-
-		<!--Icons for GUI -->
-		<dependency>
-			<groupId>org.kordamp.ikonli</groupId>
-			<artifactId>ikonli-javafx</artifactId>
-			<version>12.3.1</version>
-		</dependency>
-
-
-		<!--Fluent design for GUI -->
-		<dependency>
-			<groupId>org.kordamp.ikonli</groupId>
-			<artifactId>ikonli-fluentui-pack</artifactId>
-			<version>12.3.1</version>
-		</dependency>
-
 
 		<!-- X3 decompresison library -->
 		<dependency>
@@ -131,6 +128,11 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<transformers>
+						<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+					</transformers>
+				</configuration>
 			</plugin>
 
 			<plugin>

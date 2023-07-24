@@ -60,6 +60,7 @@ public class SudUnpackerControl {
 	 */
 	private SudFileExpander createSudFileExpander(File file, SudUnpackerParams sudExpanderParams) {
 
+		
 		SudFileExpander fileExpander = new SudFileExpander(file); 
 
 		SudParams sudParams = new SudParams(); 
@@ -71,12 +72,14 @@ public class SudUnpackerControl {
 						
 		sudParams.setSudFilePath(file.getAbsolutePath());
 		
-		if (sudParams.saveFolder!=null) {
+		if (sudExpanderParams.saveFolder!=null) {
 			sudParams.saveFolder = sudExpanderParams.saveFolder.getAbsolutePath(); 
 		}
 		else {
 			sudParams.saveFolder = null;
 		}
+		
+		System.out.println("SAVE FOLDER: " + sudParams.saveFolder ); 
 		
 		sudParams.zeroPad = sudExpanderParams.zeroPad;
 
@@ -90,6 +93,8 @@ public class SudUnpackerControl {
 	 * threads if there are any. 
 	 */
 	public void processSudFiles() {
+		updateListeners(Sud_Message.UNPACK_START, null); 
+
 		currentFileInd = 0; 
 		for (int i=0; i<sudExapnderParams.nThreads; i++) {
 			startNextFileTask(null); 
@@ -101,8 +106,6 @@ public class SudUnpackerControl {
 	 */
 	private synchronized void startNextFileTask(SudFileProcessTask oldTask) {
 		
-		System.out.println("startNextFileTask: " + currentFileInd);
-
 	
 		if (sudExapnderParams.sudFiles == null ||   currentFileInd >= sudExapnderParams.sudFiles.size()) {
 			updateListeners(Sud_Message.UNPACK_FINISH, null);
@@ -206,6 +209,7 @@ public class SudUnpackerControl {
 					});
 				}
 			});
+		
 		}
 
 		public File getFile() {
@@ -243,24 +247,32 @@ public class SudUnpackerControl {
 		}
 
 		private void processNextFile() {
+			Platform.runLater(()->{
+				updateListeners(Sud_Message.END_SUD_FILE, this); 
+			});
 			startNextFileTask(this); 
 		}
 
 		@Override protected void succeeded() {
 			super.succeeded();
-			updateMessage("Done!" + file.getName());
+			updateProgress(chunkCount, chunkCount);
+
+			updateMessage("Done! " + file.getName());
 			processNextFile();
 		}
 
 		@Override protected void cancelled() {
 			super.cancelled();
-			updateMessage("Cancelled!");
+			updateMessage("Cancelled! " + file.getName());
 			//processNextFile();
 		}
 
 		@Override protected void failed() {
 			super.failed();
-			updateMessage("Failed!");
+			updateMessage("Failed! " + file.getName());
+			Platform.runLater(()->{
+				updateListeners(Sud_Message.END_SUD_FILE, this); 
+			});
 			processNextFile();
 		}
 
