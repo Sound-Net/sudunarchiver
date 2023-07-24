@@ -2,7 +2,7 @@
 
 ## Introduction
 
-SUDUnarchiver is the sud file decompressiong program you always wished you had for your SoundTrap data. Sud decompression is now built directly into [PAMGuard]<www.pamguard.org>, however, there are use cases when users may wish to, for example, extract only metadata from sud files or need uncompressed wav files for analysis in other programs. SUDUnarchiver is an easy-to-use program with a number of powerful features not available in SoundTrap or PAMGuard. 
+SUDUnarchiver is the sud file decompressiong program you always wished you had for your SoundTrap data. Sud decompression is now built directly into [PAMGuard](www.pamguard.org), however, there are use cases when users may wish to, for example, extract only metadata from sud files or need uncompressed wav files for analysis in other programs. SUDUnarchiver is an easy-to-use program with a number of powerful features not available in SoundTrap or PAMGuard. 
 
 - Decompress all sud files within a folders or subfolders. 
 - Select which data within sud filesto decompress. 
