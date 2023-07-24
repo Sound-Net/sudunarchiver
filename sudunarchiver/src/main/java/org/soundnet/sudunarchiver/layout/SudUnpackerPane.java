@@ -20,7 +20,9 @@ import javafx.concurrent.Task;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleListProperty;
 
+import java.awt.Desktop;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -192,7 +194,7 @@ public class SudUnpackerPane extends BorderPane {
 
 		Button filesButton = new Button(); 
 		filesButton.setGraphic(SudIkonDude.createPamIcon("fltral-document-copy-48", DEFAULT_IKON_SIZE));
-
+		filesButton.setTooltip(new Tooltip("Open a single or multiple individual files"));
 
 		fileChooser.setTitle("Open SUD File");
 		fileChooser.getExtensionFilters().addAll(
@@ -207,6 +209,8 @@ public class SudUnpackerPane extends BorderPane {
 
 		Button folderButton = new Button(); 
 		folderButton.setGraphic(SudIkonDude.createPamIcon("fltral-folder-open-20", DEFAULT_IKON_SIZE));
+		folderButton.setTooltip(new Tooltip("Open a folder of files"));
+
 		folderButton.setOnAction((action)->{
 			folderChooser.setTitle("Open SUD Folder");
 			File sudFolder = folderChooser.showDialog(sudUnpackerView.getStage());
@@ -229,6 +233,8 @@ public class SudUnpackerPane extends BorderPane {
 		subFolderHBox.setSpacing(DEFAULT_SPACING);
 		subFolderHBox.setAlignment(Pos.CENTER_LEFT);
 		subFolderToggle = new ToggleSwitch();
+		subFolderToggle.setTooltip(new Tooltip("If true then all sud files within nested sub folders will be selected. \n If false then only sud files within the selected folder are selected"));
+
 		subFolderToggle.selectedProperty().addListener((obsVal, oldval, newVal)->{
 			updateSudFolder(); 
 		});
@@ -243,16 +249,48 @@ public class SudUnpackerPane extends BorderPane {
 		saveTextFiles = new TextField(); 
 		saveTextFiles.setText("Files will be saved to same location");
 		saveTextFiles.setEditable(false);
+		saveTextFiles.setTooltip(new Tooltip("Shows the location of decompressed files")); 
 
 		Button folderSaveButton = new Button(); 
+		folderSaveButton.setTooltip(new Tooltip("Select a folder to save files to")); 
 		folderSaveButton.setGraphic(SudIkonDude.createPamIcon("fltral-folder-open-20", DEFAULT_IKON_SIZE));
 		folderSaveButton.setOnAction((action)->{
 			folderSaveChooser.setTitle("Open SUD Folder");
 			saveFolder = folderSaveChooser.showDialog(sudUnpackerView.getStage());
 			updateSaveFolder(); 
-		
-
 		});
+
+
+		Button folderOpenButton = new Button(); 
+		folderOpenButton.setTooltip(new Tooltip("Open the current folder decompressed files are saved to")); 
+		folderOpenButton.setGraphic(SudIkonDude.createPamIcon("fltrmz-open-folder-20", DEFAULT_IKON_SIZE));
+		folderOpenButton.setOnAction((action)->{
+			//open the current save folder. 
+			File folder = null; 
+			if (saveFolder!=null) {
+				folder = saveFolder; 
+			}
+			else if (currentFolder!=null){
+				folder = currentFolder; 
+			}
+
+			if (folder ==null) {
+				Alert a = new Alert(AlertType.ERROR);
+				a.setContentText("There is no save location because a sud file folder has not been selected"); 
+				a.setTitle("No save location yet"); 
+				a.showAndWait();
+			}
+			else {
+				try {
+					Desktop.getDesktop().open(folder);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+
+
 
 		HBox saveHBox = new HBox(); 
 		saveHBox.setSpacing(DEFAULT_SPACING);
@@ -266,35 +304,42 @@ public class SudUnpackerPane extends BorderPane {
 
 		saveTextFiles.prefHeightProperty().bind(folderSaveButton.heightProperty());
 
-		saveHBox.getChildren().addAll(saveTextFiles, folderSaveButton, blankSpace); 
+		saveHBox.getChildren().addAll(saveTextFiles, folderSaveButton, folderOpenButton); 
 
 		/**************Decompress Section ***************/
-		
+
 		Label decompressLabel = new Label("Decompress"); 
 		setTitleLabel(decompressLabel);
 
 		wavSaveToggle = new ToggleSwitch("Wav files"); 
+		wavSaveToggle.setTooltip(new Tooltip("True to decompress raw audio.")); 
+
 		wavSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
-		
+
 		wavZeroPad = new CheckBox("Zero Pad"); 
+		wavZeroPad.setTooltip(new Tooltip("SoundTraps can drop samples. if this occurs then long sound files can have strange time values. \nAdding in zeros to dropped sections keeps the time within a file more consistant.")); 
+
 		BorderPane wavSaveTogglePane = new BorderPane(); 
 		wavSaveTogglePane.setLeft(wavSaveToggle);
 		wavSaveTogglePane.setRight(wavZeroPad);
 
 
 		clkSaveToggle = new ToggleSwitch("Click files"); 
+		clkSaveToggle.setTooltip(new Tooltip("Decompress and save click detections.")); 
 		clkSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
 
 		csvSaveToggle = new ToggleSwitch("CSV files"); 
+		csvSaveToggle.setTooltip(new Tooltip("Save csv files (usually contain temperature and accelerometer data)")); 
 		csvSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
 
 		xmlSaveToggle = new ToggleSwitch("XML files"); 
+		xmlSaveToggle.setTooltip(new Tooltip("Save metadata files")); 
 		xmlSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
@@ -309,6 +354,7 @@ public class SudUnpackerPane extends BorderPane {
 		runHBox.setAlignment(Pos.CENTER_LEFT);
 
 		runButton = new Button(); 
+		runButton.setTooltip(new Tooltip("Start or stop the decompression process")); 
 		runButton.setGraphic(SudIkonDude.createPamIcon("fltfmz-play-20", DEFAULT_IKON_SIZE));
 		runButton.setOnAction((action)->{
 			if (!isRunning) {
@@ -326,6 +372,9 @@ public class SudUnpackerPane extends BorderPane {
 		});
 
 		threadSpinner = new Spinner<Integer>(1, 8, 1, 1); 
+		threadSpinner.setTooltip(new Tooltip("Select the number of parallel processor threads to run. For example, if set to 2 then \n"
+				+ "two sud files are deocmpressed at the same time on different processor cores. \nSetting this higher will severly throttle your computer!")); 
+
 		threadSpinner.getStyleClass().add( Spinner.STYLE_CLASS_SPLIT_ARROWS_HORIZONTAL);
 		threadSpinner.setPrefWidth(70);
 		threadSpinner.prefHeightProperty().bind(runButton.heightProperty());
@@ -556,7 +605,7 @@ public class SudUnpackerPane extends BorderPane {
 	private boolean isSudFile(File file) {
 		return file.getName().endsWith(".sud"); 
 	}
-	
+
 	private void updateSudFolder() {
 		if (currentFolder != null) {
 
@@ -577,18 +626,18 @@ public class SudUnpackerPane extends BorderPane {
 	public SudUnpackerParams getParams(SudUnpackerParams params) {
 
 		params.saveFolder = this.saveFolder; 
-		
+
 		params.nThreads = this.threadSpinner.getValue(); 
-		
+
 		params.subFolder = this.subFolderToggle.isSelected();
-		
+
 		params.unPackWav = this.wavSaveToggle.isSelected();
 		params.unPackCSV = this.csvSaveToggle.isSelected();
 		params.unPackXML = this.xmlSaveToggle.isSelected();
 		params.unPackClicks = this.clkSaveToggle.isSelected();
-		
+
 		params.sudFiles = this.sudFiles.get(); 
-		
+
 		params.zeroPad = this.wavZeroPad.isSelected(); 
 
 		return params;
@@ -599,24 +648,24 @@ public class SudUnpackerPane extends BorderPane {
 	 * @param params - the params to set
 	 */
 	public void setParams(SudUnpackerParams params) {
-		
+
 		this.wavSaveToggle.setSelected(	params.unPackWav);
 		this.csvSaveToggle.setSelected(	params.unPackCSV);
 		this.xmlSaveToggle.setSelected(	params.unPackXML);
 		this.clkSaveToggle.setSelected(	params.unPackClicks);
-		
+
 		this.threadSpinner.getValueFactory().setValue(	params.nThreads);; 
 
 		this.subFolderToggle.setSelected(params.subFolder);
-		
+
 		this.sudFiles.set(FXCollections.observableList(params.sudFiles));
-		
+
 		this.wavSaveToggle.setSelected(params.zeroPad);
-		
+
 		//if the folder is null will do nothing. Note this will override file list if it has already been set. 
 		this.currentFolder =  params.saveFolder; 
 		updateSudFolder();
-		
+
 		this.saveFolder =  params.saveFolder; 
 		this.updateSaveFolder(); 
 	}
@@ -628,7 +677,7 @@ public class SudUnpackerPane extends BorderPane {
 	public Validator getValidator() {
 		return this.validator;
 	}
-	
+
 	/**
 	 * Check if there are run errors and show a dialog if so. 
 	 * @return true of there were errors, false if not. 
@@ -648,13 +697,13 @@ public class SudUnpackerPane extends BorderPane {
 		}
 
 		if (errcount>0) {
-	        Alert a = new Alert(AlertType.ERROR);
-	        a.setHeaderText("Cannot decompress SUD");
-	        a.setContentText(errorMessages);
-	        a.show();
-	        return true;
+			Alert a = new Alert(AlertType.ERROR);
+			a.setHeaderText("Cannot decompress SUD");
+			a.setContentText(errorMessages);
+			a.show();
+			return true;
 		}
-		
+
 		return false; 
 	}
 
