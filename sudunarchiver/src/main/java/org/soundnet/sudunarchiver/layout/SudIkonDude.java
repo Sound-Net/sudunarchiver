@@ -53,6 +53,7 @@ package org.soundnet.sudunarchiver.layout;
 //			FontIcon icon2 = (FontIcon) createPamIcon(iconStr);
 //			icon2.setIconSize(size);
 			
+			
 			FontIcon icon2 =new FontIcon(); 
 			String style = "-fx-icon-code: \"" + iconStr + "\";" + " -fx-icon-size: " + size + ";";
 			icon2.setStyle(style);

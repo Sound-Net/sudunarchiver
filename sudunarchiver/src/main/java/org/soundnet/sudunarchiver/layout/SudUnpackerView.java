@@ -5,14 +5,16 @@ import org.soundnet.sudunarchiver.SudUnpackListener.Sud_Message;
 import org.soundnet.sudunarchiver.SudUnpackerControl;
 import org.soundnet.sudunarchiver.SudUnpackerControl.SudFileProcessTask;
 
+import com.pixelduke.transit.Style;
+import com.pixelduke.transit.TransitStyleClass;
+import com.pixelduke.transit.TransitTheme;
+
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import jfxtras.styles.jmetro.JMetroStyleClass;
-import jfxtras.styles.jmetro.Style;
-import jfxtras.styles.jmetro.JMetro;
+
 
 /**
  * The layout and controls for SUD unpacking 
@@ -53,9 +55,14 @@ public class SudUnpackerView extends BorderPane {
 
 
 	public static void setTheme(Scene scene, Pane root) {
-		JMetro jMetro = new JMetro(Style.LIGHT);
-		jMetro.setScene(scene);
-		root.getStyleClass().add(JMetroStyleClass.BACKGROUND);
+		
+		/*...*/
+		TransitTheme transitTheme = new TransitTheme(Style.LIGHT);
+		transitTheme.setScene(scene); 
+		
+//		JMetro jMetro = new JMetro(Style.LIGHT);
+//		jMetro.setScene(scene);
+		root.getStyleClass().add(TransitStyleClass.BACKGROUND);
 	}
 
 	public Window getStage() {
