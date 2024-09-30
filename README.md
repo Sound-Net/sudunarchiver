@@ -25,6 +25,7 @@ SUDUnarchiver is straightforward to use.
 <center><img src="resources/sudunarchover_screenshot_1.png" width="512"></center>
 An example of SUDUnarchiver decompressing a folder of files.
 
-
+## License
+This program is open source under a GNU General Public License v3.0. This a viral open soruce license whcih means you can use or modify the code or program in any way you wish, however, if you use source code in the repository then you need to make whichever code you've used it in also open. 
 
 
