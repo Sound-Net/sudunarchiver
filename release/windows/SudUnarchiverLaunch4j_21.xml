@@ -3,7 +3,7 @@
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
   <jar>C:\Users\Jamie Macaulay\git\sudunarchiver\sudunarchiver\target\sudunarchiver-0.0.2.jar</jar>
-  <outfile>C:\Users\Jamie Macaulay\Desktop\sudunarchiver_0-91.exe</outfile>
+  <outfile>C:\Users\Jamie Macaulay\Desktop\sudunarchiver_0-92.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir></chdir>
@@ -18,8 +18,8 @@
     <path>C:\Program Files\Amazon Corretto\jdk17.0.6_10</path>
     <requiresJdk>false</requiresJdk>
     <requires64Bit>true</requires64Bit>
-    <minVersion>11</minVersion>
-    <maxVersion>20</maxVersion>
+    <minVersion>21</minVersion>
+    <maxVersion>23</maxVersion>
     <opt>-mx4098m</opt>
     <opt>-Djava.library.path=&quot;%EXEDIR%\\lib&quot;</opt>
   </jre>
