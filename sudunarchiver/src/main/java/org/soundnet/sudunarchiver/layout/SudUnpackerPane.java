@@ -200,9 +200,11 @@ public class SudUnpackerPane extends BorderPane {
 		fileChooser.getExtensionFilters().addAll(
 				new ExtensionFilter("Sud Files", "*.sud"));
 		filesButton.setOnAction((action)->{
-			List<File> sudFiles = fileChooser.showOpenMultipleDialog(sudUnpackerView.getStage());
-			if (sudFiles != null) {
-				setSudTextField(null, sudFiles);
+			List<File> newSudFiles = fileChooser.showOpenMultipleDialog(sudUnpackerView.getStage());
+			if (newSudFiles != null) {
+				sudFiles.clear();
+				setSudTextField(null, newSudFiles);
+				sudFiles.addAll(newSudFiles);
 			}
 		});
 

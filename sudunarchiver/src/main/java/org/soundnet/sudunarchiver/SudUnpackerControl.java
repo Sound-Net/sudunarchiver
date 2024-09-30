@@ -221,13 +221,38 @@ public class SudUnpackerControl {
 
 			try {
 				
-				System.out.println("Creating map: " + file.getAbsolutePath());
 
+				
 				//mape the file
-				updateMessage("Mapping SUD file " + file.getName());
-				SudFileMap fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, false);
-				sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
+				updateMessage("Opening SUD file " + file.getName());
+				
+				//does a map exist already?
+				File sudMapFile = new File(sudFileExpander.getSudFile().getAbsolutePath()+"x"); 
+				boolean exists = sudMapFile.exists(); 
+				
+				SudFileMap fileMap;
+				if (!exists) {
+					
+					System.out.println("Creating map: " + file.getAbsolutePath());
+
+					updateProgress(-1, chunkCount);
+					//mape the file
+					updateMessage("Mapping SUD file " + file.getName());
+					
+					fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, null, false);
+					
+					SudAudioInputStream.saveSudMap(fileMap, sudMapFile);
+
+					sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
+				}
+				else {
+					fileMap = SudAudioInputStream.loadSudMap(sudMapFile); 
+				}
+				
+				//we only want the number of blocks with chunk Ids that we actually be using//////TODO
+				
 				nBlocks = fileMap.chunkHeaderMap.size(); 
+				
 							
 				updateProgress(-1, chunkCount);
 				System.out.println("SUD file start processing: " + file.getAbsolutePath());
