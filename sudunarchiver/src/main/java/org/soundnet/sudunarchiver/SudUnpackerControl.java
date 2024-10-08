@@ -223,7 +223,7 @@ public class SudUnpackerControl {
 				
 
 				
-				//mape the file
+				//map the file
 				updateMessage("Opening SUD file " + file.getName());
 				
 				//does a map exist already?
@@ -239,7 +239,9 @@ public class SudUnpackerControl {
 					//mape the file
 					updateMessage("Mapping SUD file " + file.getName());
 					
-					fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, null, false);
+					fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, null, true);
+					
+//					System.out.println("----Total sud file samples: !!! " + fileMap.getTotalSamples());
 					
 					SudAudioInputStream.saveSudMap(fileMap, sudMapFile);
 
