@@ -83,6 +83,50 @@
           <failOnError>false</failOnError>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>de.perdian.maven.plugins</groupId>
+        <artifactId>macosappbundler-maven-plugin</artifactId>
+        <version>1.21.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <plist>
+            <JVMMainClassName>org.soundnet.sudunarchiver.AppLauncher</JVMMainClassName>
+            <CFBundleIconFile>../resources/decompressing_whales_icon_mac.icns</CFBundleIconFile>
+            <CFBundleDisplayName>PAMGuard</CFBundleDisplayName>
+            <CFBundleDevelopmentRegion>English</CFBundleDevelopmentRegion>
+            <CFBundleURLTypes>
+              <string>msa</string>
+            </CFBundleURLTypes>
+            <JVMVersion>21+</JVMVersion>
+            <JVMArguments>
+              <string>-c</string>
+            </JVMArguments>
+          </plist>
+          <dmg>
+            <generate>true</generate>
+            <additionalResources>
+              <additionalResource>
+                <directory>src/target/bundle/</directory>
+              </additionalResource>
+            </additionalResources>
+          </dmg>
+          <jdk>
+            <include>true</include>
+            <location>/Library/Java/JavaVirtualMachines/amazon-corretto-21.jdk</location>
+          </jdk>
+          <codesign>
+            <enable>false</enable>
+            <identity>3rd Party Mac Developer Application: Jamie Macaulay (7365S9DZ34)</identity>
+          </codesign>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <properties>
