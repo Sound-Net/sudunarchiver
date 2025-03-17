@@ -1,6 +1,7 @@
 package org.soundnet.sudunarchiver;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import org.pamguard.x3.sud.SudAudioInputStream;
 import org.pamguard.x3.sud.SudFileExpander;
@@ -228,6 +229,10 @@ public class SudUnpackerControl {
 				
 				//does a map exist already?
 				File sudMapFile = new File(sudFileExpander.getSudFile().getAbsolutePath()+"x"); 
+				
+				//can we write to the location?
+				
+				
 				boolean exists = sudMapFile.exists(); 
 				
 				SudFileMap fileMap;
@@ -242,10 +247,12 @@ public class SudUnpackerControl {
 					fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, null, true);
 					
 //					System.out.println("----Total sud file samples: !!! " + fileMap.getTotalSamples());
+				
+					sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
 					
+					//must be after the close so that if the write fails we still close extracted files. 
 					SudAudioInputStream.saveSudMap(fileMap, sudMapFile);
 
-					sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
 				}
 				else {
 					fileMap = SudAudioInputStream.loadSudMap(sudMapFile); 
@@ -265,6 +272,10 @@ public class SudUnpackerControl {
 			
 				
 				System.out.println("SUD file finished processing");
+			}
+			catch (FileNotFoundException F) {
+				System.err.println("The sud file map could not be written - likely read only drive");
+				
 			}
 			catch (Exception e) {
 				e.printStackTrace();
