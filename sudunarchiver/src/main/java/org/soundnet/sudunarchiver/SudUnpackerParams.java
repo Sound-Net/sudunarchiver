@@ -54,7 +54,12 @@ public class SudUnpackerParams {
 	/**
 	 * True to zero pad the wav files
 	 */
-	public boolean zeroPad; 
+	public boolean zeroPad;
+
+	/**
+	 * True to unpack the mag files
+	 */
+	public boolean unPackMag = true; 
 
 
 }

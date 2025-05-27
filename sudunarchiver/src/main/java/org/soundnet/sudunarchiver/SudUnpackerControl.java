@@ -69,7 +69,7 @@ public class SudUnpackerControl {
 		sudParams.setSudEnable(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV, sudExpanderParams.unPackClicks);
 		
 		sudParams.setFileSave(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV,  
-				sudExpanderParams.unPackXML, sudExpanderParams.unPackClicks);
+				sudExpanderParams.unPackXML, sudExpanderParams.unPackClicks, sudExpanderParams.unPackMag);
 						
 		sudParams.setSudFilePath(file.getAbsolutePath());
 		

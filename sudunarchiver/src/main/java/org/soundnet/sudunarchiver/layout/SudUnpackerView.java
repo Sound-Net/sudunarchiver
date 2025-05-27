@@ -106,6 +106,7 @@ public class SudUnpackerView extends BorderPane {
 		case UNPACK_FINISH:
 			sudUnpackerPane.setRunning(false); 
 			sudUnpackerPane.setRunButtonIcon(); 
+			sudUnpackerPane.getProgressBar().setProgress(1);
 			break;
 		case UNPACK_START:
 			sudUnpackerPane.getTaskView().getTasks().clear();

@@ -148,7 +148,9 @@ public class SudUnpackerPane extends BorderPane {
 	/**
 	 * wav zero pad check box. 
 	 */
-	private CheckBox wavZeroPad; 
+	private CheckBox wavZeroPad;
+
+	private ToggleSwitch magSaveToggle; 
 
 
 
@@ -345,6 +347,13 @@ public class SudUnpackerPane extends BorderPane {
 		xmlSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
+		
+		magSaveToggle = new ToggleSwitch("Mag/Accel files"); 
+		magSaveToggle.setTooltip(new Tooltip("Save swv file that contains magnetometer and accelerometer data")); 
+		magSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
+			enableControls();
+		}); 
+
 
 		/**************Progress  Section ***************/
 
@@ -419,7 +428,7 @@ public class SudUnpackerPane extends BorderPane {
 		vBox.setSpacing(5);
 		vBox.setPadding(new Insets(DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING));
 		vBox.getChildren().addAll(fileLabelBox, filesHBox, subFolderHBox, decompressLabel, wavSaveTogglePane, clkSaveToggle,
-				csvSaveToggle, xmlSaveToggle, saveLabel, saveHBox, runLabel, runBorderPane, progressView); 
+				csvSaveToggle, xmlSaveToggle, magSaveToggle, saveLabel, saveHBox, runLabel, runBorderPane, progressView); 
 
 
 		return vBox;
@@ -500,7 +509,8 @@ public class SudUnpackerPane extends BorderPane {
 	private void enableControls() {
 		runButton.setDisable(true);
 		if (wavSaveToggle.isSelected() || clkSaveToggle.isSelected() || 
-				csvSaveToggle.isSelected() || xmlSaveToggle.isSelected()) {
+				csvSaveToggle.isSelected() || xmlSaveToggle.isSelected() 
+				|| magSaveToggle.isSelected()) {
 			runButton.setDisable(false);
 		}
 		wavZeroPad.setDisable(true);
@@ -659,6 +669,7 @@ public class SudUnpackerPane extends BorderPane {
 		params.unPackCSV = this.csvSaveToggle.isSelected();
 		params.unPackXML = this.xmlSaveToggle.isSelected();
 		params.unPackClicks = this.clkSaveToggle.isSelected();
+		params.unPackMag = this.magSaveToggle.isSelected();
 
 		params.sudFiles = this.sudFiles.get(); 
 
@@ -677,6 +688,7 @@ public class SudUnpackerPane extends BorderPane {
 		this.csvSaveToggle.setSelected(	params.unPackCSV);
 		this.xmlSaveToggle.setSelected(	params.unPackXML);
 		this.clkSaveToggle.setSelected(	params.unPackClicks);
+		this.magSaveToggle.setSelected(	params.unPackMag);
 
 		this.threadSpinner.getValueFactory().setValue(	params.nThreads);; 
 
