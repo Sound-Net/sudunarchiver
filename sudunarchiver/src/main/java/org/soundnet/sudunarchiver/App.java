@@ -1,5 +1,9 @@
 package org.soundnet.sudunarchiver;
 
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.soundnet.sudunarchiver.layout.SudUnpackerView;
 
 import javafx.application.Application;
@@ -38,8 +42,18 @@ public class App extends Application {
             }
         });
         
-        stage.getIcons().add( new Image(App.class.getResourceAsStream("decompressing_whales_icon.png"))); 
+        String relIconPath  =	"./src/main/java/org/soundnet/sudunarchiver/decompressing_whales_icon.png";
 
+		Path path = Paths.get(relIconPath);
+		
+//		System.out.println(path.toAbsolutePath().normalize().toString());
+		                
+        try {
+			stage.getIcons().add(new Image(path.toUri().toURL().toExternalForm()));
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
 //        stage.getIcons().add(new Image(<yourclassname>.class.getResourceAsStream("icon.png")));
         
