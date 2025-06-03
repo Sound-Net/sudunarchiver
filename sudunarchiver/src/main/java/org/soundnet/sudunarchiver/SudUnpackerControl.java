@@ -240,15 +240,7 @@ public class SudUnpackerControl {
 					
 					System.out.println("Creating map: " + file.getAbsolutePath());
 
-					updateProgress(-1, chunkCount);
-					//mape the file
-					updateMessage("Mapping SUD file " + file.getName());
-					
-					fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, null, true);
-					
-//					System.out.println("----Total sud file samples: !!! " + fileMap.getTotalSamples());
-				
-					sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
+					fileMap = mapSudFile( sudMapFile);
 					
 					//must be after the close so that if the write fails we still close extracted files. 
 					SudAudioInputStream.saveSudMap(fileMap, sudMapFile);
@@ -256,6 +248,11 @@ public class SudUnpackerControl {
 				}
 				else {
 					fileMap = SudAudioInputStream.loadSudMap(sudMapFile); 
+					if (fileMap==null) {
+						//old sud map fiel that cannot be opened
+						fileMap = mapSudFile( sudMapFile);
+						SudAudioInputStream.saveSudMap(fileMap, sudMapFile);
+					}
 				}
 				
 				//we only want the number of blocks with chunk Ids that we actually be using//////TODO
@@ -313,6 +310,21 @@ public class SudUnpackerControl {
 			});
 			processNextFile();
 		}
+		
+		private SudFileMap mapSudFile(File sudMapFile) throws Exception {
+
+			updateProgress(-1, chunkCount);
+			//mape the file
+			updateMessage("Mapping SUD file " + file.getName());
+			
+			SudFileMap fileMap = SudAudioInputStream.mapSudFile(sudFileExpander, null, true);
+			
+//			System.out.println("----Total sud file samples: !!! " + fileMap.getTotalSamples());
+		
+			sudFileExpander.getSudInputStream().close();//make sure the close the input stream so we can reset 
+			
+			return fileMap;
+		}
 
 		public int getFileindex() {
 			// TODO a bit dodgy...
@@ -320,6 +332,8 @@ public class SudUnpackerControl {
 		}
 	}
 
+	
+	
 	/**
 	 * The current index of the files being processed. 
 	 * @return - the current file index. 
