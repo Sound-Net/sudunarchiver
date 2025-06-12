@@ -60,13 +60,15 @@ public class SudUnpackerControl {
 	 * @return the file expander for a file. 
 	 */
 	private SudFileExpander createSudFileExpander(File file, SudUnpackerParams sudExpanderParams) {
+		
+		
 
 		
 		SudFileExpander fileExpander = new SudFileExpander(file); 
 
 		SudParams sudParams = new SudParams(); 
 												
-		sudParams.setSudEnable(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV, sudExpanderParams.unPackClicks);
+		sudParams.setSudEnable(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV, sudExpanderParams.unPackClicks, sudExpanderParams.unPackMag);
 		
 		sudParams.setFileSave(sudExpanderParams.unPackWav, sudExpanderParams.unPackCSV,  
 				sudExpanderParams.unPackXML, sudExpanderParams.unPackClicks, sudExpanderParams.unPackMag);
@@ -83,6 +85,10 @@ public class SudUnpackerControl {
 		System.out.println("SAVE FOLDER: " + sudParams.saveFolder ); 
 		
 		sudParams.zeroPad = sudExpanderParams.zeroPad;
+		
+		
+		System.out.println("SAVE PARAMS: " + sudParams); 
+
 
 		fileExpander.setSudParams(sudParams);
 
