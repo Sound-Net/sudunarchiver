@@ -1,22 +1,48 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.soundnet</groupId>
 	<artifactId>sudunarchiver</artifactId>
 	<version>0.0.3</version>
+
+	<name>Sud Unarchiver</name>
+	<description>Decompress and convert SoundTrap .sud files to wav, plus click and other detection data.</description>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
+
+		<javafx.version>24</javafx.version>
+
+		<main.class>org.soundnet.sudunarchiver.AppLauncher</main.class>
+		<app.name>Sud Unarchiver</app.name>
+		<!--
+			Installer version. Kept separate from ${project.version} because
+			jpackage will not accept a leading zero in a macOS bundle version.
+		-->
+		<app.version>1.0.3</app.version>
+		<app.vendor>SoundNet</app.vendor>
+		<app.copyright>Copyright (c) Jamie Macaulay</app.copyright>
+		<!-- Directory assembled below and used as the jpackage input -->
+		<app.dir>${project.build.directory}/app</app.dir>
+		<installer.dir>${project.build.directory}/installer</installer.dir>
+		<!--
+			jpackage output type on macOS. DMG gives a finished (unsigned)
+			installer; override with -Dmac.package.type=APP_IMAGE to get a bare
+			.app that can be signed and notarised before a DMG is built round it.
+		-->
+		<mac.package.type>DMG</mac.package.type>
 	</properties>
+
 	<dependencies>
 	
 			<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
-			<version>21</version>
+			<version>${javafx.version}</version>
 		</dependency>
 	
 			<!--Icons for GUI -->
@@ -55,6 +81,18 @@
 		    <groupId>com.pixelduke</groupId>
 		    <artifactId>transit</artifactId>
 		    <version>2.0.0</version>
+		    <exclusions>
+		        <!--
+		            FXSkins drags in the JavaFX 11.0.2 win/mac jars, which hold a
+		            complete copy of JavaFX 11 plus its native libraries. Left in,
+		            they land on the installer class path ahead of JavaFX
+		            ${javafx.version} and ship Windows DLLs inside the macOS app.
+		        -->
+		        <exclusion>
+		            <groupId>org.openjfx</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
 		</dependency>
 
 		<!-- Extra controls for JavaFX -->
@@ -116,7 +154,7 @@
 						<manifest>
 							<addClasspath>false</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>org.soundnet.sudunarchiver.AppLauncher</mainClass>
+							<mainClass>${main.class}</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -124,6 +162,12 @@
 
 
 			<plugin>
+				<!--
+					Fat jar, for anyone running from the command line with their
+					own Java. Attached as sudunarchiver-<version>-all.jar so the
+					plain jar stays the main artifact and the installers below
+					can lay the dependencies out as separate jars.
+				-->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>3.4.0</version>
@@ -136,10 +180,57 @@
 					</execution>
 				</executions>
 				<configuration>
+					<shadedArtifactAttached>true</shadedArtifactAttached>
+					<shadedClassifierName>all</shadedClassifierName>
+					<createDependencyReducedPom>false</createDependencyReducedPom>
 					<transformers>
 						<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
 					</transformers>
 				</configuration>
+			</plugin>
+
+			<!--
+				Collect every runtime jar (including the platform specific
+				JavaFX jars) into ${app.dir}, which is what jpackage bundles.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.7.1</version>
+				<executions>
+					<execution>
+						<id>collect-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals><goal>copy-dependencies</goal></goals>
+						<configuration>
+							<outputDirectory>${app.dir}</outputDirectory>
+							<includeScope>runtime</includeScope>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Drop our own jar next to the dependencies so the input folder has everything -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>stage-app-jar</id>
+						<phase>package</phase>
+						<goals><goal>run</goal></goals>
+						<configuration>
+							<target>
+								<copy file="${project.build.directory}/${project.build.finalName}.jar"
+								      todir="${app.dir}"/>
+								<mkdir dir="${installer.dir}"/>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -174,53 +265,108 @@
 					</execution>
 				</executions>
 			</plugin>
-			
-			
-				<!--  Plugin which creates a .dmg file for MacOS. -->
-		    <plugin>
-		        <groupId>de.perdian.maven.plugins</groupId>
-		        <artifactId>macosappbundler-maven-plugin</artifactId>
-		        <version>1.21.1</version>
-		        <configuration>
-		            <plist>
-		                <JVMMainClassName>org.soundnet.sudunarchiver.AppLauncher</JVMMainClassName>
-		               <CFBundleIconFile>../resources/decompressing_whales_icon_mac.icns</CFBundleIconFile>
-		                <CFBundleDisplayName>PAMGuard</CFBundleDisplayName>
-		                <CFBundleDevelopmentRegion>English</CFBundleDevelopmentRegion>
-		                <CFBundleURLTypes>
-		                    <string>msa</string>
-		                </CFBundleURLTypes>
-		                <JVMVersion>21+</JVMVersion>
-		                <JVMArguments>
-		                    <string>-c</string>
-		                </JVMArguments>
-		            </plist>
-		              <dmg>
-		                <generate>true</generate>
-		                <additionalResources>
-		                    <additionalResource>
-		                        <directory>src/target/bundle/</directory>
-		                    </additionalResource>
-		                </additionalResources>
-		            </dmg>
-		             <jdk>
-			            <include>true</include>
-			            <location>/Library/Java/JavaVirtualMachines/amazon-corretto-21.jdk</location>
-			        </jdk>
-		             <codesign>
-			             <enable>false</enable>
-		                <identity>3rd Party Mac Developer Application: Jamie Macaulay (7365S9DZ34)</identity>
-		            </codesign>
-		        </configuration>
-		        <executions>
-		            <execution>
-		                <phase>package</phase>
-		                <goals>
-		                    <goal>bundle</goal>
-		                </goals>
-		            </execution>
-		        </executions>
-		    </plugin> 
 		</plugins>
 	</build>
+
+	<profiles>
+		<!--
+			Installer profiles. jpackage can only build a native installer for
+			the platform it runs on, and bundles a Java runtime into it, so the
+			user needs no Java installed. Each profile activates on its own OS:
+
+				macOS   :  mvn -Pinstaller-mac     clean verify   ->  target/installer/*.dmg
+				Windows :  mvn -Pinstaller-windows clean verify   ->  target\installer\*.msi
+		-->
+		<profile>
+			<id>installer-mac</id>
+			<activation>
+				<os><family>mac</family></os>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.panteleyev</groupId>
+						<artifactId>jpackage-maven-plugin</artifactId>
+						<version>1.6.5</version>
+						<executions>
+							<execution>
+								<id>package-dmg</id>
+								<phase>verify</phase>
+								<goals><goal>jpackage</goal></goals>
+							</execution>
+						</executions>
+						<configuration>
+							<name>${app.name}</name>
+							<appVersion>${app.version}</appVersion>
+							<vendor>${app.vendor}</vendor>
+							<copyright>${app.copyright}</copyright>
+							<description>${project.description}</description>
+							<type>${mac.package.type}</type>
+							<input>${app.dir}</input>
+							<destination>${installer.dir}</destination>
+							<mainJar>${project.build.finalName}.jar</mainJar>
+							<mainClass>${main.class}</mainClass>
+							<icon>${project.basedir}/../resources/decompressing_whales_icon_mac.icns</icon>
+							<javaOptions>
+								<javaOption>-Xmx4096m</javaOption>
+								<javaOption>-Dapple.awt.application.appearance=system</javaOption>
+								<!-- JavaFX loads its native libraries from the class path -->
+								<javaOption>--enable-native-access=ALL-UNNAMED</javaOption>
+							</javaOptions>
+							<macPackageName>${app.name}</macPackageName>
+							<macPackageIdentifier>org.soundnet.sudunarchiver</macPackageIdentifier>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<profile>
+			<id>installer-windows</id>
+			<activation>
+				<os><family>windows</family></os>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.panteleyev</groupId>
+						<artifactId>jpackage-maven-plugin</artifactId>
+						<version>1.6.5</version>
+						<executions>
+							<execution>
+								<id>package-msi</id>
+								<phase>verify</phase>
+								<goals><goal>jpackage</goal></goals>
+							</execution>
+						</executions>
+						<configuration>
+							<name>${app.name}</name>
+							<appVersion>${app.version}</appVersion>
+							<vendor>${app.vendor}</vendor>
+							<copyright>${app.copyright}</copyright>
+							<description>${project.description}</description>
+							<type>MSI</type>
+							<input>${app.dir}</input>
+							<destination>${installer.dir}</destination>
+							<mainJar>${project.build.finalName}.jar</mainJar>
+							<mainClass>${main.class}</mainClass>
+							<icon>${project.basedir}/../resources/decompressing_whales_icon.ico</icon>
+							<javaOptions>
+								<javaOption>-Xmx4096m</javaOption>
+								<!-- JavaFX loads its native libraries from the class path -->
+								<javaOption>--enable-native-access=ALL-UNNAMED</javaOption>
+							</javaOptions>
+							<winShortcut>true</winShortcut>
+							<winMenu>true</winMenu>
+							<winMenuGroup>SoundNet</winMenuGroup>
+							<winDirChooser>true</winDirChooser>
+							<winPerUserInstall>true</winPerUserInstall>
+							<!-- Stable UUID: keeps upgrades replacing the previous install -->
+							<winUpgradeUuid>cfd655f9-9b0a-4f8e-a2d5-a03eea5a691f</winUpgradeUuid>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
