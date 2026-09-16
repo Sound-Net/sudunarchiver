@@ -418,6 +418,10 @@ public class SudUnpackerPane extends BorderPane {
 
 		progressView = new TaskProgressView<SudFileProcessTask>(); 
 		progressView.setRetainTasks(true);
+		//allow the task view to grow and shrink with the window instead of sticking at its preferred height. 
+		progressView.setMinHeight(0);
+		progressView.setPrefHeight(150);
+		progressView.setMaxHeight(Double.MAX_VALUE);
 
 		//enable the controls. 
 		enableControls();
@@ -429,6 +433,9 @@ public class SudUnpackerPane extends BorderPane {
 		vBox.setPadding(new Insets(DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING));
 		vBox.getChildren().addAll(fileLabelBox, filesHBox, subFolderHBox, decompressLabel, wavSaveTogglePane, clkSaveToggle,
 				csvSaveToggle, xmlSaveToggle, magSaveToggle, saveLabel, saveHBox, runLabel, runBorderPane, progressView); 
+
+		//the task view soaks up any spare vertical space as the window is resized. 
+		VBox.setVgrow(progressView, Priority.ALWAYS);
 
 
 		return vBox;
