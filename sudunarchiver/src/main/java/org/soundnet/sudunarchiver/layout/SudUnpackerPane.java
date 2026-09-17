@@ -48,6 +48,8 @@ public class SudUnpackerPane extends BorderPane {
 
 	public static final int DEFAULT_IKON_SIZE = 22;//pixel 
 
+	public static final int DEFAULT_TOGGLE_IKON_SIZE = 18;//pixel 
+
 	private Validator validator = new Validator();
 
 	private TextField filesTextFiles;
@@ -150,7 +152,22 @@ public class SudUnpackerPane extends BorderPane {
 	 */
 	private CheckBox wavZeroPad;
 
-	private ToggleSwitch magSaveToggle; 
+	private ToggleSwitch magSaveToggle;
+
+	/**
+	 * Flips between the decompression controls and the data checking controls.
+	 */
+	private FlipPane flipPane;
+
+	/**
+	 * The data checking controls, which sit on the back of the flip pane.
+	 */
+	private SudVerifyPane sudVerifyPane;
+
+	/**
+	 * Flips the pane over between decompressing and checking files.
+	 */
+	private Button verifyButton;
 
 
 
@@ -245,6 +262,18 @@ public class SudUnpackerPane extends BorderPane {
 
 		subFolderHBox.getChildren().addAll(subFolderToggle, new Label("Sub folders")); 
 
+		verifyButton = new Button();
+		verifyButton.setOnAction((action)->{
+			flipPane.flip();
+			setVerifyButtonIcon();
+		});
+
+		//the sub folder toggle on the left, the flip button hard over on the right.
+		BorderPane subFolderPane = new BorderPane();
+		subFolderPane.setLeft(subFolderHBox);
+		subFolderPane.setRight(verifyButton);
+		BorderPane.setAlignment(subFolderHBox, Pos.CENTER_LEFT);
+
 		/**************Save Files Section ***************/
 
 		Label saveLabel = new Label("Save to"); 
@@ -315,8 +344,9 @@ public class SudUnpackerPane extends BorderPane {
 		Label decompressLabel = new Label("Decompress"); 
 		setTitleLabel(decompressLabel);
 
-		wavSaveToggle = new ToggleSwitch("Wav files"); 
-		wavSaveToggle.setTooltip(new Tooltip("True to decompress raw audio.")); 
+		wavSaveToggle = new ToggleSwitch(); 
+		HBox wavSaveRow = createToggleRow(wavSaveToggle, "fltrmz-speaker-24", "Wav files", 
+				"True to decompress raw audio."); 
 
 		wavSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
@@ -326,30 +356,34 @@ public class SudUnpackerPane extends BorderPane {
 		wavZeroPad.setTooltip(new Tooltip("SoundTraps can drop samples. if this occurs then long sound files can have strange time values. \nAdding in zeros to dropped sections keeps the time within a file more consistant.")); 
 
 		BorderPane wavSaveTogglePane = new BorderPane(); 
-		wavSaveTogglePane.setLeft(wavSaveToggle);
+		wavSaveTogglePane.setLeft(wavSaveRow);
 		wavSaveTogglePane.setRight(wavZeroPad);
 
 
-		clkSaveToggle = new ToggleSwitch("Click files"); 
-		clkSaveToggle.setTooltip(new Tooltip("Decompress and save click detections.")); 
+		clkSaveToggle = new ToggleSwitch(); 
+		HBox clkSaveRow = createToggleRow(clkSaveToggle, "fltrmz-pulse-24", "Click files", 
+				"Decompress and save click detections."); 
 		clkSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
 
-		csvSaveToggle = new ToggleSwitch("CSV files"); 
-		csvSaveToggle.setTooltip(new Tooltip("Save csv files (usually contain temperature and accelerometer data)")); 
+		csvSaveToggle = new ToggleSwitch(); 
+		HBox csvSaveRow = createToggleRow(csvSaveToggle, "fltral-convert-to-table-24", "CSV files", 
+				"Save csv files (usually contain temperature and accelerometer data)"); 
 		csvSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
 
-		xmlSaveToggle = new ToggleSwitch("XML files"); 
-		xmlSaveToggle.setTooltip(new Tooltip("Save metadata files")); 
+		xmlSaveToggle = new ToggleSwitch(); 
+		HBox xmlSaveRow = createToggleRow(xmlSaveToggle, "fltral-code-24", "XML files", 
+				"Save metadata files"); 
 		xmlSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
 		
-		magSaveToggle = new ToggleSwitch("Mag/Accel files"); 
-		magSaveToggle.setTooltip(new Tooltip("Save swv file that contains magnetometer and accelerometer data")); 
+		magSaveToggle = new ToggleSwitch(); 
+		HBox magSaveRow = createToggleRow(magSaveToggle, "fltral-compass-northwest-24", "Mag/Accel files", 
+				"Save swv file that contains magnetometer and accelerometer data"); 
 		magSaveToggle.selectedProperty().addListener((obsVal, oldVal, newVal)->{
 			enableControls();
 		}); 
@@ -428,17 +462,71 @@ public class SudUnpackerPane extends BorderPane {
 
 		/**************Overall Layout**************/
 
-		VBox vBox = new VBox(); 
-		vBox.setSpacing(5);
-		vBox.setPadding(new Insets(DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING));
-		vBox.getChildren().addAll(fileLabelBox, filesHBox, subFolderHBox, decompressLabel, wavSaveTogglePane, clkSaveToggle,
-				csvSaveToggle, xmlSaveToggle, magSaveToggle, saveLabel, saveHBox, runLabel, runBorderPane, progressView); 
+		//everything to do with decompressing goes on the front of the flip pane. 
+		VBox decompressBox = new VBox(); 
+		decompressBox.setSpacing(5);
+		decompressBox.getChildren().addAll(decompressLabel, wavSaveTogglePane, clkSaveRow,
+				csvSaveRow, xmlSaveRow, magSaveRow, saveLabel, saveHBox, runLabel, runBorderPane, progressView); 
 
 		//the task view soaks up any spare vertical space as the window is resized. 
 		VBox.setVgrow(progressView, Priority.ALWAYS);
 
+		//the checks go on the back of the flip pane. 
+		sudVerifyPane = new SudVerifyPane(this); 
+
+		flipPane = new FlipPane(decompressBox, sudVerifyPane); 
+
+		//the button shows what pressing it will flip to, so it starts off showing the checks. 
+		setVerifyButtonIcon();
+
+		VBox vBox = new VBox(); 
+		vBox.setSpacing(5);
+		vBox.setPadding(new Insets(DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING,DEFAULT_SPACING));
+		vBox.getChildren().addAll(fileLabelBox, filesHBox, subFolderPane, flipPane); 
+
+		VBox.setVgrow(flipPane, Priority.ALWAYS);
 
 		return vBox;
+	}
+
+	/**
+	 * Set the icon on the flip button so that it shows which set of controls
+	 * pressing it will flip to. 
+	 */
+	private void setVerifyButtonIcon() {
+		if (flipPane.isFrontShowing()) {
+			verifyButton.setGraphic(SudIkonDude.createPamIcon("fltral-clipboard-search-24", DEFAULT_IKON_SIZE));
+			verifyButton.setTooltip(new Tooltip("Verify - check the selected sud files for common problems"));
+		}
+		else {
+			verifyButton.setGraphic(SudIkonDude.createPamIcon("fltral-folder-zip-24", DEFAULT_IKON_SIZE));
+			verifyButton.setTooltip(new Tooltip("Decompress - go back to the decompression controls"));
+		}
+	}
+
+	/**
+	 * Get the data checking controls. 
+	 * @return the verify pane. 
+	 */
+	public SudVerifyPane getVerifyPane() {
+		return sudVerifyPane;
+	}
+
+	/**
+	 * Get the sud files which are currently selected. 
+	 * @return the list of sud files. 
+	 */
+	public List<File> getSudFiles() {
+		return sudFiles.get();
+	}
+
+	/**
+	 * Get the folder decompressed files are saved to. Can be null, in which case
+	 * files are saved alongside the sud files. 
+	 * @return the save folder. 
+	 */
+	public File getSaveFolder() {
+		return saveFolder;
 	}
 	
 	/**
@@ -525,10 +613,38 @@ public class SudUnpackerPane extends BorderPane {
 	}
 
 	/**
+	 * Create a row with a toggle switch, an icon and a label. The toggle switch
+	 * skin ignores any graphic set on the switch itself, so the icon has to sit
+	 * alongside it instead. 
+	 * @param toggleSwitch - the toggle switch, which should have no text of its own.
+	 * @param iconString - the icon to show next to the switch. 
+	 * @param text - the text to show next to the icon. 
+	 * @param tooltip - a description of what the toggle does. 
+	 * @return the row of controls. 
+	 */
+	public static HBox createToggleRow(ToggleSwitch toggleSwitch, String iconString, String text, String tooltip) {
+		Label label = new Label(text);
+		label.setGraphic(SudIkonDude.createPamIcon(iconString, DEFAULT_TOGGLE_IKON_SIZE));
+		label.setGraphicTextGap(DEFAULT_SPACING);
+
+		HBox hBox = new HBox();
+		hBox.setSpacing(DEFAULT_SPACING);
+		hBox.setAlignment(Pos.CENTER_LEFT);
+		hBox.getChildren().addAll(toggleSwitch, label);
+
+		if (tooltip != null) {
+			toggleSwitch.setTooltip(new Tooltip(tooltip));
+			Tooltip.install(label, new Tooltip(tooltip));
+		}
+
+		return hBox;
+	}
+
+	/**
 	 * Set the title label. 
 	 * @param label - the label. 
 	 */
-	private void setTitleLabel(Label label) {
+	public void setTitleLabel(Label label) {
 		label.setFont(Font.font(null, FontWeight.BOLD, 18));
 	}; 
 

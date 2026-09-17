@@ -9,6 +9,7 @@ import org.soundnet.sudunarchiver.layout.SudUnpackerView;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
@@ -56,7 +57,10 @@ public class App extends Application {
         
 //        stage.getIcons().add(new Image(<yourclassname>.class.getResourceAsStream("icon.png")));
         
-        var scene = new Scene(new StackPane(view.getMainPane()), 500, 500);
+        var scene = new Scene(new StackPane(view.getMainPane()), 500, 700);
+
+        //a perspective camera gives the verify pane a proper flip rather than a flat squash.
+        scene.setCamera(new PerspectiveCamera());
         
         view.setTheme(scene, view.getMainPane());
         stage.setTitle("SUD Unpacker"); 
