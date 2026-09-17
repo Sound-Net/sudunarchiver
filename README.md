@@ -36,8 +36,8 @@ SUDUnarchiver is straightforward to use.
 - 3 -> Optionally select a location to save files to. 
 - 4 -> Select mult threading if your computer is up to it and press the run button. 
 
-<center><img src="resources/sudunarchover_screenshot_1.png" width="512"></center>
-An example of SUDUnarchiver decompressing a folder of files.
+<center><img src="resources/sudunarchiver_decompress.png" width="400"></center>
+SUDUnarchiver set up to extract the sensor and metadata files from a deployment. Every toggle in the Decompress section is on except Wav files - decompressing the audio is slow and can need terabytes of disk space.
 
 ## Checking sud files
 
@@ -50,9 +50,18 @@ Each check can be switched on and off individually.
 - **Xsens size check** -> checks that those \*.xsensIMU.csv files are a sensible size rather than near empty. 
 - **Sud sound check** -> opens a few sud files, spread evenly through the deployment, and reads a snippet of sound from each of them. 
 
+<center><img src="resources/sudunarchiver_checks.png" width="400"></center>
+The Checks controls. The clipboard button, top right, flips between these and the decompression controls.
+
 Press play and the results appear in the report tab below, with a summary line saying whether the deployment passed, and the names of any files which caused a check to fail. Checks can be stopped part way through. 
 
+<center><img src="resources/sudunarchiver_report.png" width="475"></center>
+The Report tab. Each check gets a line, and anything which failed is listed with the names of the files which caused it.
+
 The sound check also adds a tab per sud file it opened, each showing a spectrogram of the snippet for every channel in the file. The spectrograms are in dB re 1 uPa<sup>2</sup>/Hz and have the same colour range slider and colour maps as PAMGuard, so the amplitude limits and colours of the plot can be changed to suit the data. This is a quick look to confirm the recorder was listening to something sensible - it is not a display to navigate around. 
+
+<center><img src="resources/sudunarchiver_spectrogram.png" width="475"></center>
+A spectrogram tab from the sound check, with one spectrogram per channel of the sud file.
 
 ## License
 This program is open source under a GNU General Public License v3.0. This is a viral open source license which means you can use or modify the code or program in any way you wish, however, if you use this source code, then you need to make whichever code you've used it in is also open. Using the program to decompress data etc. has no effect on whether the data is open or not.
