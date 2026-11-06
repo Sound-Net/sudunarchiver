@@ -45,7 +45,25 @@ public class SudUnpackerControl {
 	/**
 	 * The currently running tasks. 
 	 */
-	public ArrayList<SudFileProcessTask> currentTasks = new ArrayList<SudFileProcessTask>(); 
+	public ArrayList<SudFileProcessTask> currentTasks = new ArrayList<SudFileProcessTask>();
+
+	/**
+	 * Snapshot of the parameters used by the current run. This is copied when a run
+	 * starts so that selecting a new folder (or save location) in the UI cannot change
+	 * the list of files a run is working through.
+	 */
+	private SudUnpackerParams runParams;
+
+	/**
+	 * Identifies the current run. Tasks from an older run (e.g. one that was stopped)
+	 * never pick up files from, or send updates for, a newer run.
+	 */
+	private volatile int runId = 0;
+
+	/**
+	 * The number of tasks in the current run that have not yet finished.
+	 */
+	private int activeTasks = 0;
 
 
 	public SudUnpackerControl() {
@@ -99,42 +117,84 @@ public class SudUnpackerControl {
 	 * Process all sud files in the list. This splits the sud files between different
 	 * threads if there are any. 
 	 */
-	public void processSudFiles() {
-		updateListeners(Sud_Message.UNPACK_START, null); 
+	public synchronized void processSudFiles() {
+		runId++;
+		runParams = sudExapnderParams.copy();
+		if (runParams.sudFiles == null) runParams.sudFiles = new ArrayList<File>();
 
-		currentFileInd = 0; 
-		for (int i=0; i<sudExapnderParams.nThreads; i++) {
-			startNextFileTask(null); 
+		currentTasks.clear();
+		activeTasks = 0;
+		currentFileInd = 0;
+
+		updateListeners(Sud_Message.UNPACK_START, null);
+
+		int nThreads = Math.max(1, runParams.nThreads);
+		for (int i=0; i<nThreads; i++) {
+			startNextFileTask();
+		}
+
+		//no files to process at all.
+		if (activeTasks==0) {
+			updateListeners(Sud_Message.UNPACK_FINISH, null);
 		}
 	}
 
 	/**
-	 * Start the next file task. 
+	 * Start the next file task for the current run, if there are any files left.
+	 * @return true if a new task was started.
 	 */
-	private synchronized void startNextFileTask(SudFileProcessTask oldTask) {
-		
-	
-		if (sudExapnderParams.sudFiles == null ||   currentFileInd >= sudExapnderParams.sudFiles.size()) {
-			updateListeners(Sud_Message.UNPACK_FINISH, null);
-			return;
-		}
-		
-		if (oldTask!=null) {
-			this.currentTasks.remove(oldTask); 
+	private synchronized boolean startNextFileTask() {
+
+		if (currentFileInd >= runParams.sudFiles.size()) {
+			return false;
 		}
 
 		SudFileProcessTask sudProcessTask = new SudFileProcessTask(
-				sudExapnderParams.sudFiles.get(currentFileInd), sudExapnderParams); 
-		
+				runParams.sudFiles.get(currentFileInd), runParams, runId, currentFileInd);
+
 		updateListeners(Sud_Message.NEW_SUD_FILE, sudProcessTask);
 
-		currentTasks.add(sudProcessTask); 
-		
-		currentFileInd++; 
+		currentTasks.add(sudProcessTask);
+		activeTasks++;
+
+		currentFileInd++;
 
 		Thread th = new Thread(sudProcessTask);
 		th.setDaemon(true);
 		th.start();
+
+		return true;
+	}
+
+	/**
+	 * Called when a task has finished (successfully or not). Starts the next file in
+	 * the same run and only reports that the run has finished once every task in it
+	 * has completed.
+	 * @param task - the task that has finished.
+	 */
+	private synchronized void taskFinished(SudFileProcessTask task) {
+		currentTasks.remove(task);
+
+		//a task from an old run - it must not start processing files from the current run.
+		if (task.runId != runId) return;
+
+		activeTasks--;
+		startNextFileTask();
+
+		if (activeTasks==0) {
+			updateListeners(Sud_Message.UNPACK_FINISH, null);
+		}
+	}
+
+	/**
+	 * Send an update for a task, but only if the task belongs to the current run.
+	 * @param message - the message.
+	 * @param task - the task.
+	 */
+	private void updateTaskListeners(Sud_Message message, SudFileProcessTask task) {
+		if (task.runId == runId) {
+			updateListeners(message, task);
+		}
 	}
 
 
@@ -151,10 +211,22 @@ public class SudUnpackerControl {
 		this.sudExapnderParams = sudParams;
 	}
 
-	public void stop() {
-		for (int i=0; i<this.currentTasks.size(); i++) {
-			currentTasks.get(i).cancel(true); 
+	/**
+	 * Get the parameters for the run currently in progress (or the last run).
+	 * @return the parameters for the current run - can be null if nothing has been run.
+	 */
+	public SudUnpackerParams getRunParams() {
+		return runParams;
+	}
+
+	public synchronized void stop() {
+		//invalidate the current run so nothing more is started from it.
+		runId++;
+		for (SudFileProcessTask task : new ArrayList<SudFileProcessTask>(currentTasks)) {
+			task.cancel(true);
 		}
+		currentTasks.clear();
+		activeTasks = 0;
 	}
 
 	/**
@@ -194,12 +266,21 @@ public class SudUnpackerControl {
 
 		private int chunkCount;
 
-		private SudUnpackerParams sudExapnderParams;
+		/**
+		 * The run this task belongs to.
+		 */
+		private final int runId;
 
-		public SudFileProcessTask(File file, SudUnpackerParams sudExapnderParams) {
+		/**
+		 * The index of the file within the run's file list.
+		 */
+		private final int fileIndex;
 
-			this.file = file; 
-			this.sudExapnderParams=sudExapnderParams; 
+		public SudFileProcessTask(File file, SudUnpackerParams sudExapnderParams, int runId, int fileIndex) {
+
+			this.file = file;
+			this.runId = runId;
+			this.fileIndex = fileIndex;
 			sudFileExpander = createSudFileExpander( file,  sudExapnderParams);
 
 			sudFileExpander.addSudFileListener(( chunkId,  sudChunk)->{
@@ -212,7 +293,7 @@ public class SudUnpackerControl {
 				
 				if (chunkCount%100==0) {
 					Platform.runLater(()->{
-						updateListeners(Sud_Message.PROGRESS_UPDATE, this); 
+						updateTaskListeners(Sud_Message.PROGRESS_UPDATE, this);
 					});
 				}
 			});
@@ -287,11 +368,12 @@ public class SudUnpackerControl {
 			return 0;
 		}
 
+		/**
+		 * Called on the FX thread once the task has completed.
+		 */
 		private void processNextFile() {
-			Platform.runLater(()->{
-				updateListeners(Sud_Message.END_SUD_FILE, this); 
-			});
-			startNextFileTask(this); 
+			updateTaskListeners(Sud_Message.END_SUD_FILE, this);
+			taskFinished(this);
 		}
 
 		@Override protected void succeeded() {
@@ -311,9 +393,6 @@ public class SudUnpackerControl {
 		@Override protected void failed() {
 			super.failed();
 			updateMessage("Failed! " + file.getName());
-			Platform.runLater(()->{
-				updateListeners(Sud_Message.END_SUD_FILE, this); 
-			});
 			processNextFile();
 		}
 		
@@ -333,8 +412,7 @@ public class SudUnpackerControl {
 		}
 
 		public int getFileindex() {
-			// TODO a bit dodgy...
-			return sudExapnderParams.sudFiles.indexOf(file);
+			return fileIndex;
 		}
 	}
 

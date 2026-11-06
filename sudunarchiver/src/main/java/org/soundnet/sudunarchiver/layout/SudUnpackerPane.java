@@ -132,6 +132,11 @@ public class SudUnpackerPane extends BorderPane {
 	private File currentFolder = null;
 
 	/**
+	 * The most recent folder listing task. Results from older listings are ignored.
+	 */
+	private SudFolderTasK currentFolderTask = null;
+
+	/**
 	 * The save folder. 
 	 */
 	private File saveFolder;
@@ -221,6 +226,12 @@ public class SudUnpackerPane extends BorderPane {
 		filesButton.setOnAction((action)->{
 			List<File> newSudFiles = fileChooser.showOpenMultipleDialog(sudUnpackerView.getStage());
 			if (newSudFiles != null) {
+				//individual files replace any folder selection - otherwise toggling sub folders
+				//would re-list the old folder and silently replace these files.
+				currentFolder = null;
+				currentFolderTask = null;
+				showProgressIndicator(false);
+				enableControls();
 				sudFiles.clear();
 				setSudTextField(null, newSudFiles);
 				sudFiles.addAll(newSudFiles);
@@ -404,6 +415,8 @@ public class SudUnpackerPane extends BorderPane {
 		runButton.setOnAction((action)->{
 			
 			if (!isRunning) {
+				//still listing the sud files in a newly selected folder.
+				if (currentFolderTask != null) return;
 				if (!checkRunErrors()) {
 					isRunning=true;
 					this.sudUnpackerView.run(); 
@@ -654,7 +667,7 @@ public class SudUnpackerPane extends BorderPane {
 	 * @author Jamie Macaulay
 	 *
 	 */
-	class SudFolderTasK extends Task<Integer>{
+	class SudFolderTasK extends Task<List<File>>{
 
 		/**
 		 * Use sub folders. 
@@ -672,30 +685,20 @@ public class SudUnpackerPane extends BorderPane {
 			this.subFolder =folder; 
 		}
 
-		@Override protected Integer call() throws Exception {
-			int iterations = 0;
-
-			try {
-				List<File> folderSudFiles = getSudFileList(subFolderToggle.isSelected());
-
-				if (folderSudFiles!=null) {
-					Platform.runLater(()->{
-						sudFiles.clear();
-						sudFiles.addAll(folderSudFiles); 
-					});
-				}
-
-			}
-			catch(Exception e) {
-				e.printStackTrace();
-			}
-
-			return iterations;
+		@Override protected List<File> call() throws Exception {
+			//use the folder and sub folder setting captured when the task was created.
+			return listSud(subFolder, isSubFolder);
 		}
 
-		@Override 
+		@Override
 		protected void succeeded() {
 			super.succeeded();
+			//only apply the result if this is still the most recent listing - otherwise an
+			//older, slower listing could overwrite the files from a newly selected folder.
+			if (this == currentFolderTask && getValue()!=null) {
+				sudFiles.clear();
+				sudFiles.addAll(getValue());
+			}
 			sudFilesDone();
 			updateMessage("Sud File List succeeded!");
 		}
@@ -707,16 +710,20 @@ public class SudUnpackerPane extends BorderPane {
 			updateMessage("Sud File List cancelled!");
 		}
 
-		@Override 
+		@Override
 		protected void failed() {
 			super.failed();
+			if (getException()!=null) getException().printStackTrace();
 			sudFilesDone();
 			updateMessage("Sud File List failed!");
 		}
 
 		private void sudFilesDone() {
-			showProgressIndicator(false); 
+			if (this != currentFolderTask) return;
+			currentFolderTask = null;
+			showProgressIndicator(false);
 			setSudTextField(subFolder, sudFiles);
+			enableControls();
 		}
 
 	};
@@ -768,7 +775,12 @@ public class SudUnpackerPane extends BorderPane {
 
 			showProgressIndicator(true);
 
-			Thread th = new Thread(new SudFolderTasK(currentFolder, subFolderToggle.isSelected()));
+			//don't allow a new run to start until the file list for the new folder is ready,
+			//otherwise the run would use the previous folder's files.
+			if (!isRunning) runButton.setDisable(true);
+
+			currentFolderTask = new SudFolderTasK(currentFolder, subFolderToggle.isSelected());
+			Thread th = new Thread(currentFolderTask);
 			th.setDaemon(true);
 			th.start();
 
@@ -794,7 +806,8 @@ public class SudUnpackerPane extends BorderPane {
 		params.unPackClicks = this.clkSaveToggle.isSelected();
 		params.unPackMag = this.magSaveToggle.isSelected();
 
-		params.sudFiles = this.sudFiles.get(); 
+		//copy - the UI list is cleared and refilled whenever a new folder is selected.
+		params.sudFiles = new ArrayList<File>(this.sudFiles.get());
 
 		params.zeroPad = this.wavZeroPad.isSelected(); 
 

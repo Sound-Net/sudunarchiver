@@ -1,6 +1,7 @@
 package org.soundnet.sudunarchiver;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,7 +60,26 @@ public class SudUnpackerParams {
 	/**
 	 * True to unpack the mag files
 	 */
-	public boolean unPackMag = true; 
+	public boolean unPackMag = true;
 
+	/**
+	 * Create an independent copy of the parameters, including a copy of the file
+	 * list, so that changes made in the UI do not affect a run that is in progress.
+	 * @return a copy of the parameters.
+	 */
+	public SudUnpackerParams copy() {
+		SudUnpackerParams params = new SudUnpackerParams();
+		params.sudFiles = sudFiles == null ? null : new ArrayList<File>(sudFiles);
+		params.saveFolder = saveFolder;
+		params.subFolder = subFolder;
+		params.unPackWav = unPackWav;
+		params.unPackXML = unPackXML;
+		params.unPackCSV = unPackCSV;
+		params.unPackClicks = unPackClicks;
+		params.nThreads = nThreads;
+		params.zeroPad = zeroPad;
+		params.unPackMag = unPackMag;
+		return params;
+	}
 
 }

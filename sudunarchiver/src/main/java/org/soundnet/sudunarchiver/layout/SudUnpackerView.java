@@ -74,12 +74,11 @@ public class SudUnpackerView extends BorderPane {
 		
 		//set the parameters. 
 		sudUnpackerPane.getParams(sudUnpackerControl.getSudParams());
-		
+
 		System.out.println("Hello SUD files: " + sudUnpackerControl.getSudParams().sudFiles.size());
-		
-		progress= new double[sudUnpackerControl.getSudParams().sudFiles.size()]; 
-		
-		//process the sud files. A listener will update the tasks 
+
+		//process the sud files. A listener will update the tasks. The control takes a
+		//snapshot of the parameters so the run is unaffected by later changes in the UI.
 		sudUnpackerControl.processSudFiles();
 	}
 
@@ -94,7 +93,7 @@ public class SudUnpackerView extends BorderPane {
 		switch (message) {
 		case NEW_SUD_FILE:
 			sudUnpackerPane.getTaskView().getTasks().add(0, (SudFileProcessTask) data); 
-			sudUnpackerPane.getProgressBar().setProgress(((double) sudUnpackerControl.getCurretnFileindex())/sudUnpackerControl.getSudParams().sudFiles.size());
+			sudUnpackerPane.getProgressBar().setProgress(getOverallProgress());
 
 			break;
 		case END_SUD_FILE:
@@ -109,6 +108,7 @@ public class SudUnpackerView extends BorderPane {
 			sudUnpackerPane.getProgressBar().setProgress(1);
 			break;
 		case UNPACK_START:
+			progress = new double[sudUnpackerControl.getRunParams().sudFiles.size()];
 			sudUnpackerPane.getTaskView().getTasks().clear();
 			sudUnpackerPane.getProgressBar().setProgress(0);
 			break;
@@ -129,7 +129,8 @@ public class SudUnpackerView extends BorderPane {
 	 * @return the overall progress.
 	 */
 	private double getOverallProgress() {
-		double progress=0; 
+		if (this.progress == null || this.progress.length==0) return 0;
+		double progress=0;
 		for (int i=0; i<this.progress.length; i++) {
 			progress+=this.progress[i];
 		}
