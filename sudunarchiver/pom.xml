@@ -34,6 +34,12 @@
 			.app that can be signed and notarised before a DMG is built round it.
 		-->
 		<mac.package.type>DMG</mac.package.type>
+		<!--
+			jpackage output type on Linux. DEB needs dpkg-deb and fakeroot on
+			the build machine; override with -Dlinux.package.type=RPM (needs
+			rpmbuild) for Fedora/RHEL style systems.
+		-->
+		<linux.package.type>DEB</linux.package.type>
 	</properties>
 
 	<dependencies>
@@ -276,6 +282,7 @@
 
 				macOS   :  mvn -Pinstaller-mac     clean verify   ->  target/installer/*.dmg
 				Windows :  mvn -Pinstaller-windows clean verify   ->  target\installer\*.msi
+				Linux   :  mvn -Pinstaller-linux   clean verify   ->  target/installer/*.deb
 		-->
 		<profile>
 			<id>installer-mac</id>
@@ -363,6 +370,56 @@
 							<winPerUserInstall>true</winPerUserInstall>
 							<!-- Stable UUID: keeps upgrades replacing the previous install -->
 							<winUpgradeUuid>cfd655f9-9b0a-4f8e-a2d5-a03eea5a691f</winUpgradeUuid>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<profile>
+			<id>installer-linux</id>
+			<activation>
+				<os><family>unix</family><name>Linux</name></os>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.panteleyev</groupId>
+						<artifactId>jpackage-maven-plugin</artifactId>
+						<version>1.6.5</version>
+						<executions>
+							<execution>
+								<id>package-deb</id>
+								<phase>verify</phase>
+								<goals><goal>jpackage</goal></goals>
+							</execution>
+						</executions>
+						<configuration>
+							<name>${app.name}</name>
+							<appVersion>${app.version}</appVersion>
+							<vendor>${app.vendor}</vendor>
+							<copyright>${app.copyright}</copyright>
+							<description>${project.description}</description>
+							<type>${linux.package.type}</type>
+							<input>${app.dir}</input>
+							<destination>${installer.dir}</destination>
+							<mainJar>${project.build.finalName}.jar</mainJar>
+							<mainClass>${main.class}</mainClass>
+							<icon>${project.basedir}/../resources/decompressing_whales_icon.png</icon>
+							<javaOptions>
+								<javaOption>-Xmx4096m</javaOption>
+								<!-- JavaFX loads its native libraries from the class path -->
+								<javaOption>--enable-native-access=ALL-UNNAMED</javaOption>
+							</javaOptions>
+							<!--
+								Debian package names must be lower case with no
+								spaces; installs to /opt/sudunarchiver.
+							-->
+							<linuxPackageName>sudunarchiver</linuxPackageName>
+							<linuxAppCategory>science</linuxAppCategory>
+							<linuxMenuGroup>Science;Audio</linuxMenuGroup>
+							<linuxShortcut>true</linuxShortcut>
+							<linuxAppRelease>1</linuxAppRelease>
 						</configuration>
 					</plugin>
 				</plugins>

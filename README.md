@@ -25,7 +25,11 @@ mvn -Pinstaller-mac clean verify
 mvn -Pinstaller-windows clean verify
 ```
 
-These put a .dmg (macOS) or .msi (Windows) in `sudunarchiver/target/installer`. 
+```bash
+mvn -Pinstaller-linux clean verify
+```
+
+These put a .dmg (macOS), .msi (Windows) or .deb (Linux) in `sudunarchiver/target/installer`. The Linux build needs `dpkg-deb` and `fakeroot` installed (`sudo apt install fakeroot`). 
 
 ## Use
 
